@@ -1,0 +1,39 @@
+<!DOCTYPE>
+<html>
+<head>
+    <title>支付测试</title>
+    <link rel="stylesheet" href="path/to/weui/dist/style/weui.min.css"/>
+    <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"/>
+</head>
+<body>
+<a href="#" class="weui_btn weui_btn_primary">点击支付</a>
+</body>
+<script type="text/javascript">
+    wx.config({
+        debug: false,
+        appId: '<%= appId %>',
+        timestamp: '<%= timestamp %>',
+        nonceStr: '<%= nonceStr %>',
+        signature: '<%= signature %>',
+        jsApiList: []
+    });
+    wx.ready(function () {
+
+    });
+    wx.error(function () {
+
+    });
+    function wxPay() {
+        wx.chooseWXPay({
+            timeStamp: 0,
+            nonceStr: '',
+            package: 'prepay_id=',
+            signType: 'MD5',
+            paySign: '',
+            success: function (res) {
+                console.log('res:', res);
+            }
+        })
+    }
+</script>
+</html>

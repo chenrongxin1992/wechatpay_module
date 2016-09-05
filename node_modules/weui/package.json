@@ -1,0 +1,72 @@
+{
+  "name": "weui",
+  "version": "0.4.3",
+  "description": "A UI library by WeChat official design team, includes the most useful widgets/modules in mobile web applications.",
+  "keywords": [
+    "weui",
+    "wechat",
+    "weixin",
+    "css",
+    "less",
+    "mobile"
+  ],
+  "style": "dist/style/weui.css",
+  "less": "src/style/weui.less",
+  "main": "dist/style/weui.css",
+  "scripts": {
+    "start": "gulp -ws",
+    "test": "gulp release"
+  },
+  "author": {
+    "name": "wechat ui team"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/weui/weui.git"
+  },
+  "homepage": "https://github.com/weui/weui",
+  "bugs": {
+    "url": "https://github.com/weui/weui/issues"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^6.3.1",
+    "browser-sync": "^2.9.11",
+    "gulp": "^3.8.10",
+    "gulp-cssnano": "^2.0.0",
+    "gulp-header": "^1.7.1",
+    "gulp-less": "^3.0.2",
+    "gulp-postcss": "^6.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.5.2",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-tap": "^0.1.3",
+    "yargs": "^1.3.3"
+  },
+  "gitHead": "5836bb5010cbfe79cd13d454ca3ec15f58d6c036",
+  "_id": "weui@0.4.3",
+  "_shasum": "fa9bb15e76a93200cc87f9e053877d62402aac03",
+  "_from": "weui@latest",
+  "_npmVersion": "3.3.6",
+  "_nodeVersion": "5.0.0",
+  "_npmUser": {
+    "name": "jfengjiang",
+    "email": "xingzhewujiang1999@gmail.com"
+  },
+  "dist": {
+    "shasum": "fa9bb15e76a93200cc87f9e053877d62402aac03",
+    "tarball": "https://registry.npmjs.org/weui/-/weui-0.4.3.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "jfengjiang",
+      "email": "xingzhewujiang1999@gmail.com"
+    }
+  ],
+  "_npmOperationalInternal": {
+    "host": "packages-16-east.internal.npmjs.com",
+    "tmp": "tmp/weui-0.4.3.tgz_1467720165867_0.8116664246190339"
+  },
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/weui/-/weui-0.4.3.tgz"
+}
