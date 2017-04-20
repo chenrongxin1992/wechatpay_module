@@ -42,6 +42,7 @@ exports.sign = function (attr, key) {
     }
     if (key)
         stringA += 'key=' + key;
+    console.log(stringA)
     var _sign = String(md5(stringA)).toUpperCase();
     return _sign;
 };

@@ -45,7 +45,7 @@ var WeChatPayOrder = new mongoose.Schema({
         require: true
     },
     spbill_create_ip: String,//APP和网页支付提交用户端ＩＰ
-    time_start: String, //订单生成时间 格式 yyyyMMddHHmmss
+    time_start: String, //订单生成时间 格式 yyyyMMddHHmmss  //下单时间
     time_expire: String, //订单结束时间  结束时间必须大于开始时间至少5分钟
     goods_tag: String, //商品标记
     notify_url: String,  //通知地址 通知回调地址
@@ -72,11 +72,13 @@ var WeChatPayOrder = new mongoose.Schema({
     coupon_fee: Number,//代金券金额
     coupon_count: Number,//代金券使用数量
     transaction_id: String,//微信支付订单号
-    time_end: Number,//支付完成时间
+    time_end: Number,//支付完成时间   //收到微信通知时间
     dtCreate: {
         type: Date,
         default: Date.now()
-    }
+    },
+    is_prepay:Number,   //是否预支付，1是，0否
+    is_pay :Number   //是否支付，1是，0否
 });
 
 /**
