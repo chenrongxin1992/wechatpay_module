@@ -220,8 +220,8 @@ exports.PlaceOrder = function (req, res, next) {
                     }));*/
                     var data = {
                         appId : config.appid,
-                        timeStamp : timeStamp,
-                        nonceStr : nonceStr,
+                        timeStamp : arg.timestamp,
+                        nonceStr : arg.noncestr,
                         package : package,
                         signType : signType,
                         paySign : paySign
