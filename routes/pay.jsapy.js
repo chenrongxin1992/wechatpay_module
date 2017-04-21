@@ -87,9 +87,9 @@ exports.PlaceOrder = function (req, res, next) {
             if (!total_fee) {
                 return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '支付金额fee不能为空'));
             }
-            if (!verify.CheckNumber(total_fee)) {
-                return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
-            }
+            // if (!verify.CheckNumber(total_fee)) {
+            //     return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
+            // }
             /*var _fee = parseInt(total_fee);
             if (_fee < 0) {
                 return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
