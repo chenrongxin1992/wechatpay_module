@@ -64,7 +64,7 @@ exports.PlaceOrder = function (req, res, next) {
             var bid = '0',  //商圈编号
                 title = 'ceshi',  //商品描述
                 wx_order_no = '', //订单号  非必传，
-                total_fee = 0.01,  //总金额
+                total_fee = 1,  //总金额
                 spbill_create_ip = req.headers['x-forwarded-for'], //用户客户端IP
                 openid = 'or0Yltxu45dWsOsJVp9VchNKsUrA'; //用户标识
             console.log('ip:',spbill_create_ip)
@@ -87,13 +87,13 @@ exports.PlaceOrder = function (req, res, next) {
             if (!total_fee) {
                 return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '支付金额fee不能为空'));
             }
-            // if (!verify.CheckNumber(total_fee)) {
-            //     return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
-            // }
-            /*var _fee = parseInt(total_fee);
+            if (!verify.CheckNumber(total_fee)) {
+                return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
+            }
+            var _fee = parseInt(total_fee);
             if (_fee < 0) {
                 return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
-            }*/
+            }
             if (!spbill_create_ip) {
                 return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '客户端IP不能为空'));
             }
