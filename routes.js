@@ -8,6 +8,7 @@ var index = require('./routes/index'),
 module.exports = function (app) {
     app.get('/MP_verify_UoXtBUxJ1Hh9SUUn.txt',index.MP_verify_UoXtBUxJ1Hh9SUUn)
     app.get('/index', index.index);
+    app.get('/test2', index.test2);
     app.get('/paytest', index.PayTest);
     app.get('/pay/jsapi', payJsApi.PlaceOrder);//JSAPI支付请求,获取prepay_id
     app.post('/pay/jsapi', payJsApi.PlaceOrder_bk);//JSAPI支付请求,获取prepay_id
