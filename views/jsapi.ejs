@@ -5,9 +5,15 @@
 </head>
 <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
 <body>
-    <script type="text/javascript">
+      appId: '<%= wxconfig.appid %>',
+            timestamp: '<%= wxconfig.timestamp %>',
+            nonceStr: '<%= wxconfig.noncestr %>',
+            signature: '<%= wxconfig.signature %>',
+
+   <p style="font-size: 100px" onclick="testpay()">点击支付</p>
+   <script type="text/javascript">
         wx.config({
-            debug: false,
+            debug: true,
             appId: '<%= wxconfig.appid %>',
             timestamp: '<%= wxconfig.timestamp %>',
             nonceStr: '<%= wxconfig.noncestr %>',
@@ -34,7 +40,5 @@
             })
         } 
     </script>
-
-   <p style="font-size: 100px" onclick="testpay()">点击支付</p>
 </body>
 </html>
