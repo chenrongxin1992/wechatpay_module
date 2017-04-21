@@ -109,7 +109,7 @@ exports.PayTest = function (req, res, next) {
                 
             var timestamp = moment().format('X'),  //10位
                 noncestr = weChatTools.randomStr(), //16位
-                url = 'http://test.api.pay.178wifi.com/paytest',
+                url = 'http://test.pay.178wifi.com/paytest',
                 jsapi_ticket = arg,
                 str = 'jsapi_ticket='+jsapi_ticket+'&noncestr='+noncestr+'&timestamp='+timestamp+'&url='+url,
                 shasum = crypto.createHash('sha1')
