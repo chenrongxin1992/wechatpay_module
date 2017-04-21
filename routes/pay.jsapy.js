@@ -65,7 +65,7 @@ exports.PlaceOrder = function (req, res, next) {
                 title = 'ceshi',  //商品描述
                 wx_order_no = '', //订单号  非必传，
                 total_fee = 1,  //总金额
-                spbill_create_ip = '127.0.0.1', //用户客户端IP
+                spbill_create_ip = request.connection.remoteAddress, //用户客户端IP
                 openid = 'or0Ylt2REO-tK55RP-zSvLV4f6MY'; //用户标识
 
             var time_start = moment().format('yyyyMMddHHmmss')  //下单时间
