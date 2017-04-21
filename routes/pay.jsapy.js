@@ -485,8 +485,11 @@ exports.Notice = function (req, res, next) {
         if (str.attach)
             content.attach = str.attach;
         weChatPay.UpdateById(doc._id, content, function (err) {
-            if (err)
+            if (err){
+                console.log('----  update err  ----')
+                console.log(err)
                 return res.end(NoticeResponse(err.message));
+            }
             return res.end(NoticeResponse());
         });
     });
@@ -561,6 +564,6 @@ function NoticeResponse(return_msg) {
         ]
     };
     console.log('----  response notice  ----')
-    console.log(result)
+    console.log(xml(result))
     return xml(result);
 };
