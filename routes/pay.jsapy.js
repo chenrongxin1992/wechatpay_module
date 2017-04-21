@@ -15,6 +15,8 @@ var https = require('https'),
     weChatPay = mongoose.model(config.tables.weChatPayOrder),
     exception = require('../module/exception'),
     businessConfig = require('../config/businessConfig'),
+    getWxConfig = require('./index'),
+    async = require('async'),
     verify = require('../tools/verify');
 
 var moment = require('moment')
@@ -35,6 +37,229 @@ var device_info = 'WEB',
 
 //下单
 exports.PlaceOrder = function (req, res, next) {
+    var getWxConfig_res = {}
+    async.waterfall([
+        function(cb){
+            getWxConfig.getWxConfig(function(result){
+                if(result){
+                    getWxConfig_res = result
+                }
+                console.log('----------  one  ------------')
+                console.log(getWxConfig_res)
+                cb(null,getWxConfig_res)
+            })       
+        },
+        function(arg,cb){
+            /*var bid = req.body.bid,  //商圈编号
+                title = req.body.title,  //商品描述
+                wx_order_no = req.body.orderNo, //订单号  非必传，
+                total_fee = req.body.fee,  //总金额
+                spbill_create_ip = req.body.ip, //用户客户端IP
+                openid = req.body.openid; //用户标识*/
+
+            console.log('----- 22  -----')
+            console.log(arg)
+
+            //测试数据
+            var bid = '0',  //商圈编号
+                title = 'ceshi',  //商品描述
+                wx_order_no = '', //订单号  非必传，
+                total_fee = 1,  //总金额
+                spbill_create_ip = '127.0.0.1', //用户客户端IP
+                openid = 'or0Ylt2REO-tK55RP-zSvLV4f6MY'; //用户标识
+
+            var time_start = moment().format('yyyyMMddHHmmss')  //下单时间
+
+            var nonce_str = weChatTools.randomStr(), //随机字符串
+                attach = '',// 附加数据
+                out_trade_no = weChatTools.merchatPayOrderNo(trade_type);//商户订单号
+
+            if (!bid) {
+                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, 'bid不能为空'));
+            }
+            var config = businessConfig[bid];
+            if (!config) {
+                return res.json(exception.throwError(exception.code.sysError.ConfigUndifand));
+            }
+            if (!title) {
+                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '商品标题title不能为空'));
+            }
+            if (!total_fee) {
+                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '支付金额fee不能为空'));
+            }
+            if (!verify.CheckNumber(total_fee)) {
+                return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
+            }
+            var _fee = parseInt(total_fee);
+            if (_fee <= 0) {
+                return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
+            }
+            if (!spbill_create_ip) {
+                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '客户端IP不能为空'));
+            }
+            if (!openid) {
+                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '用户openId不能为空'));
+            }
+
+            //当传入订单号为空时，默认为商户订单号
+            if (!wx_order_no)
+                wx_order_no = out_trade_no;
+            var req_options = url.parse(path.placeOrder);
+                req_options.method = 'POST';
+                req_options.port = 443;
+                req_options.headers = {
+                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                };
+
+            var content_data = {
+                    appid: config.appid,
+                    mch_id: config.mch_id,
+                    nonce_str: nonce_str,
+                    body: title,
+                    attach: attach,
+                    device_info: device_info,
+                    out_trade_no: out_trade_no,
+                    fee_type: fee_type,
+                    total_fee: total_fee,
+                    spbill_create_ip: spbill_create_ip,
+                    notify_url: notify_url,
+                    trade_type: trade_type,
+                    openid: openid
+                },
+                sign = weChatTools.sign(content_data, config.appSecret),
+                xml_content_data = {
+                    xml: [
+                        {appid: config.appid},
+                        {mch_id: config.mch_id},
+                        {nonce_str: nonce_str},
+                        {body: title},
+                        {device_info: device_info},
+                        {out_trade_no: out_trade_no},
+                        {fee_type: fee_type},
+                        {total_fee: total_fee},
+                        {spbill_create_ip: spbill_create_ip},
+                        {notify_url: notify_url},
+                        {trade_type: trade_type},
+                        {openid: openid},
+                        {sign: sign}
+                    ]
+                },
+                post_data = xml(xml_content_data);
+                console.log('key:',config.appSecret)
+                console.log(content_data)
+                console.log('sign',sign)
+                console.log(post_data)
+            var post_req = https.request(req_options, function (post_res) {
+                post_res.setEncoding('utf8');
+                var result = '';
+                post_res.on('data', function (chunk) {
+                    result += chunk;
+                });
+                post_res.on('end', function () {
+                    result = weChatTools.xmlToJson(result);
+                    console.log('result:', result);
+                    if (result.return_code == 'FAIL')
+                        return res.json(exception.throwError(exception.code.error, result.return_msg));
+                    if (result.result_code == 'FAIL')
+                        return res.json(exception.throwError(exception.code.downOrder[result.err_code], result.err_code_des));
+                    var prepay_id = result.prepay_id, code_url = result.code_url;
+
+                    //20170420
+                    //取得prepay_id,重新生成签名返回
+                    var timeStamp =  moment().format('X'),
+                        nonceStr = weChatTools.randomStr(),
+                        package = 'prepay_id='+prepay_id,
+                        signType = 'MD5'
+
+                    var paySign_content = {
+                        appId : config.appid,
+                        timeStamp : timeStamp,
+                        nonceStr : nonceStr,
+                        package : package,
+                        signType : signType
+                    }
+                    console.log(paySign_content)
+                    console.log()
+                    var paySign = weChatTools.sign(paySign_content, config.appSecret)
+                    console.log('-----  paySign  -----')
+                    console.log(paySign)
+                    console.log()
+
+                    var pay = new weChatPay({
+                            bid: bid,
+                            appid: config.appid,
+                            mch_id: config.mch_id,
+                            device_info: device_info,
+                            nonce_str: nonce_str,
+                            sign: sign,
+                            body: title,
+                            attach: attach,
+                            out_trade_no: out_trade_no,
+                            wx_order_no: wx_order_no,
+                            total_fee: total_fee,
+                            spbill_create_ip: spbill_create_ip,
+                            notify_url: notify_url,
+                            trade_type: trade_type,
+                            openid: openid,
+                            prepay_id: prepay_id,
+                            code_url: code_url,
+                            time_start : time_start
+                    });
+                    pay.save(function (err,doc) {
+                        if(err){
+                            console.log('------------------  err occurd  ------------------')
+                            console.error(err)
+                        }
+                        console.log(doc)
+                    });
+                    /*return res.json(exception.success({
+                        orderNo: pay.wx_order_no,
+                        out_trade_no: pay.out_trade_no,
+                        prepay_id: pay.prepay_id,
+                        paySign :paySign
+                    }));*/
+                    var data = {
+                        appId : config.appid,
+                        timeStamp : timeStamp,
+                        nonceStr : nonceStr,
+                        package : package,
+                        signType : signType,
+                        paySign : paySign
+                    }
+                    cb(null,arg,data)
+                    //res.json(data)
+                   /* res.locals.data = {
+                        appId : config.appid,
+                        timeStamp : timeStamp,
+                        nonceStr : nonceStr,
+                        package : package,
+                        signType : signType,
+                        paySign : paySign
+                    }*/
+                });
+            });
+            post_req.on('error', function (e) {
+                console.log('error:', e);
+                return res.json(e);
+            });
+            post_req.write(post_data);
+            post_req.end();
+        }
+    ],function(err,arg1,arg2){
+        if(err){
+            console.log('---- err ----')
+            console.log(err)
+        }
+        console.log('----- result  ------')
+        console.log(arg1)
+        console.log(arg2)
+        res.locals.wxconfig = arg1
+        res.locals.wxchoosepay = arg2
+        res.render('jsapi')
+    })
+};
+
+exports.PlaceOrder_bk = function (req, res, next) {
     var bid = req.body.bid,  //商圈编号
         title = req.body.title,  //商品描述
         wx_order_no = req.body.orderNo, //订单号  非必传，
@@ -218,7 +443,6 @@ exports.PlaceOrder = function (req, res, next) {
     post_req.write(post_data);
     post_req.end();
 };
-
 //支付结果通知
 exports.Notice = function (req, res, next) {
     var str = JSON.stringify(req.body);

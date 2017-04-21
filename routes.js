@@ -9,6 +9,7 @@ module.exports = function (app) {
     app.get('/MP_verify_UoXtBUxJ1Hh9SUUn.txt',index.MP_verify_UoXtBUxJ1Hh9SUUn)
     app.get('/index', index.index);
     app.get('/paytest', index.PayTest);
+    app.get('/pay/jsapi', payJsApi.PlaceOrder);//JSAPI支付请求,获取prepay_id
     app.post('/pay/jsapi', payJsApi.PlaceOrder);//JSAPI支付请求,获取prepay_id
     //微信回调
     app.post('/pay/notice', payJsApi.Notice); //支付消息通知
