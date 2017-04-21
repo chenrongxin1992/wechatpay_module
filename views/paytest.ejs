@@ -33,7 +33,7 @@
                     "bid":"0",
                     "title":"ceshi",
                     "fee":"0.01",
-                    "ip":"127.0.0.1",
+                    "ip":"61.144.175.161",
                     "openid":"or0Ylt2REO-tK55RP-zSvLV4f6MY"
                 },
                 success:function(data){
@@ -42,9 +42,9 @@
                     wx.chooseWXPay({//发起微信支付请求
                         timeStamp: data.timeStamp,
                         nonceStr: data.nonceStr,
-                        package: 'prepay_id='+data.prepay_id,
-                        signType: 'MD5',
-                        paySign: '',
+                        package: data.package,
+                        signType: data.signType,
+                        paySign: data.package,
                         success: function (res) {
                             console.log('res:', res);
                         }
