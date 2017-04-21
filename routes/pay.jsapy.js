@@ -137,6 +137,28 @@ exports.PlaceOrder = function (req, res, next) {
             if (result.result_code == 'FAIL')
                 return res.json(exception.throwError(exception.code.downOrder[result.err_code], result.err_code_des));
             var prepay_id = result.prepay_id, code_url = result.code_url;
+
+            //20170420
+            //取得prepay_id,重新生成签名返回
+            var timeStamp =  moment().format('X'),
+                nonceStr = weChatTools.randomStr(),
+                package = 'prepay_id='+prepay_id,
+                signType = 'MD5'
+
+            var paySign_content = {
+                appId : config.appid,
+                timeStamp : timeStamp,
+                nonceStr : nonceStr,
+                package : package,
+                signType : signType
+            }
+            console.log(paySign_content)
+            console.log()
+            var paySign = weChatTools.sign(paySign_content, config.appSecret)
+            console.log('-----  paySign  -----')
+            console.log(paySign)
+            console.log()
+
             var pay = new weChatPay({
                     bid: bid,
                     appid: config.appid,
@@ -164,11 +186,29 @@ exports.PlaceOrder = function (req, res, next) {
                 }
                 console.log(doc)
             });
-            return res.json(exception.success({
+            /*return res.json(exception.success({
                 orderNo: pay.wx_order_no,
                 out_trade_no: pay.out_trade_no,
-                prepay_id: pay.prepay_id
-            }));
+                prepay_id: pay.prepay_id,
+                paySign :paySign
+            }));*/
+            /*var data = {
+                appId : config.appid,
+                timeStamp : timeStamp,
+                nonceStr : nonceStr,
+                package : package,
+                signType : signType,
+                paySign : paySign
+            }
+            res.json(data)*/
+            res.locals.data = {
+                appId : config.appid,
+                timeStamp : timeStamp,
+                nonceStr : nonceStr,
+                package : package,
+                signType : signType,
+                paySign : paySign
+            }
         });
     });
     post_req.on('error', function (e) {

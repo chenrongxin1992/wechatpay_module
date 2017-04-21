@@ -33,6 +33,8 @@
                     "openid":"or0Ylt2REO-tK55RP-zSvLV4f6MY"
                 }
                 success:function(data){
+                    console.log(typeof data)
+                    console.log(data)
                     wx.chooseWXPay({//发起微信支付请求
                         timeStamp: data.timeStamp,
                         nonceStr: data.nonceStr,
