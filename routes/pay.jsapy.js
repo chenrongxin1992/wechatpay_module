@@ -31,7 +31,7 @@ var device_info = 'WEB',
     fee_type = 'CNY',
     trade_type = weChatTools.payTypes.JSAPI, //交易类型
     //notify_url = 'http://test.api.pay.w-lans.cn/pay/notice'; //订单通知地址
-    notify_url = 'http://test.api.pay.178wifi.com/pay/notice'
+    notify_url = 'http://test.pay.178wifi.com/pay/notice'
 
 //下单
 exports.PlaceOrder = function (req, res, next) {
