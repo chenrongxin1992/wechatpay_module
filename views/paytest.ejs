@@ -14,13 +14,15 @@
             timestamp: '<%= res.timestamp %>',
             nonceStr: '<%= res.noncestr %>',
             signature: '<%= res.signature %>',
-            jsApiList: []
+            jsApiList: [
+                'chooseWXPay'
+            ]
         });
         wx.ready(function () {
 
         });
-        wx.error(function () {
-
+        wx.error(function (res) {
+            console.log(res)
         });
         
         function testpay() {
