@@ -447,6 +447,10 @@ exports.PlaceOrder_bk = function (req, res, next) {
 exports.Notice = function (req, res, next) {
     var str = JSON.stringify(req.body);
     str = weChatTools.xmlToJson(str);
+    console.log()
+    console.log('-------  支付回调结果  --------')
+    console.log(str)
+    console.log()
     if (str.return_code == 'FAIL')
         return res.end(NoticeResponse(str.return_msg));
     weChatPay.FindOneByOut_trade_no(str.out_trade_no, function (err, doc) {
