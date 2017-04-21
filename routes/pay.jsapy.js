@@ -178,7 +178,7 @@ exports.PlaceOrder = function (req, res, next) {
                         package : package,
                         signType : signType
                     }
-                    console.log(paySign_content)
+                    console.log('paySign_content',paySign_content)
                     console.log()
                     var paySign = weChatTools.sign(paySign_content, config.appSecret)
                     console.log('-----  paySign  -----')
