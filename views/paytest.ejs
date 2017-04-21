@@ -3,11 +3,8 @@
 <head>
     <title>支付测试</title>
 </head>
+<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
 <body>
-
-    
-<a href="javascript:callPay();">点击支付</a>
-<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"/>
 
 <script src="jquery.min.js"></script>
     <script type="text/javascript">
@@ -26,8 +23,7 @@
 
         });
         
- 
-        function callPay() {
+        function testpay() {
             $.ajax({
                 type: "post",
                 async: true,
@@ -61,5 +57,6 @@
             })
         }
     </script>
+<p style="font-size: 100px" onclick="testpay()">点击支付</p>
 </body>
 </html>
