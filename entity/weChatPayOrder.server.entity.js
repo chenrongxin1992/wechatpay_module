@@ -76,7 +76,9 @@ var WeChatPayOrder = new mongoose.Schema({
     dtCreate: {
         type: Date,
         default: Date.now()
-    }
+    },
+    time_end_origin:String,
+    last_modify_time:String
 });
 
 /**

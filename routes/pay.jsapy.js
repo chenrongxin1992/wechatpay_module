@@ -68,7 +68,7 @@ exports.PlaceOrder = function (req, res, next) {
                 spbill_create_ip = req.headers['x-forwarded-for'], //用户客户端IP
                 openid = 'or0Yltxu45dWsOsJVp9VchNKsUrA'; //用户标识
             console.log('ip:',spbill_create_ip)
-            var time_start = moment().format('yyyyMMddHHmmss')  //下单时间
+            var time_start = moment().format('YYYYMMDDHHmmss')  //下单时间
 
             var nonce_str = weChatTools.randomStr(), //随机字符串
                 attach = '',// 附加数据
@@ -467,7 +467,9 @@ exports.Notice = function (req, res, next) {
             bank_type: str.bank_type,
             cash_fee: str.cash_fee,
             transaction_id: str.transaction_id,
-            time_end: moment(str.time_end, 'YYYYMMDDHHmmss').format('X')
+            time_end: moment(str.time_end, 'YYYYMMDDHHmmss').format('X'),//格式化时间
+            time_end_origin : str.time_end,//没有进行格式化时间
+            last_modify_time : moment('YYYYMMDDHHmmss').format('X')//最后更新时间
         };
         //非必传参数
         if (str.bank_type)

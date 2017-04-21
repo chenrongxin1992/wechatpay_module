@@ -38,6 +38,11 @@
                 paySign: '<%= wxchoosepay.paySign %>',
                 success: function (res) {
                     console.log('res:', res);
+                    if(res.err_msg === 'get_brand_wcpay_request:ok'){
+                        alert('支付成功，返回订单列表！');
+                    }else if(res.err_msg === 'get_brand_wcpay_request:cancel'){
+                        alert('取消支付！');
+                    }
                 }
             })
         } 
