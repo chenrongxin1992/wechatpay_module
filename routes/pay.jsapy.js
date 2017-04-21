@@ -90,10 +90,10 @@ exports.PlaceOrder = function (req, res, next) {
             if (!verify.CheckNumber(total_fee)) {
                 return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
             }
-            var _fee = parseInt(total_fee);
+            /*var _fee = parseInt(total_fee);
             if (_fee < 0) {
                 return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
-            }
+            }*/
             if (!spbill_create_ip) {
                 return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '客户端IP不能为空'));
             }
