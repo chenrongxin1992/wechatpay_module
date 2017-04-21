@@ -27,7 +27,7 @@ exports.PayTest = function (req, res, next) {
     // getJSApiTicket()
     var wxConfig = {},
         appid = 'wxe8eb1beadd82b467',
-        appSecret = '0ab7a3d841660978c290b20c635578ad'
+        appSecret = 'f9d0d00749ff5d8c642f4d5a41148260'
 
     // var data = fs.readFileSync('./docs/jsapi_ticket'),
     //     data = data.toString(),
@@ -57,6 +57,7 @@ exports.PayTest = function (req, res, next) {
                 res.on('end',function(){
                     console.log('-----  getAccessToken end  -----')
                     res_data = JSON.parse(res_data)
+                    console.log(res_data)
                     console.log(res_data.access_token)
                     cb(null,res_data.access_token)
                     //callback(res_data.access_token)
@@ -81,6 +82,7 @@ exports.PayTest = function (req, res, next) {
                     var expireTime = parseInt(moment().format('X')) + 7200    //过期时间
                     console.log('-----  getJSApiTicket end  -----') 
                     res_data = JSON.parse(res_data)
+                    console.log(res_data)
                     jsapi_ticket = res_data.ticket
 
                     res_data.expires_in = expireTime + 7200
