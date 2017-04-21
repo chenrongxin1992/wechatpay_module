@@ -279,9 +279,8 @@ exports.test2=function(req,res,next){
                 })
             })
         },
-        function(arg,cb){
-            var access_token = arg ,
-                jsapi_ticket = '',
+        function(access_token,cb){
+            var jsapi_ticket = '',
                 jsapi_url = 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token='+access_token+'&type=jsapi'
 
             https.get(jsapi_url,function(res){
@@ -322,12 +321,19 @@ exports.test2=function(req,res,next){
                 noncestr = weChatTools.randomStr(), //16位
                 url = 'http://test.pay.178wifi.com/test2',
                 jsapi_ticket = arg,
-                str = 'jsapi_ticket='+jsapi_ticket+'&noncestr='+noncestr+'&timestamp='+timestamp+'&url='+url,
-                shasum = crypto.createHash('sha1')
-
-            shasum.update(str)
-
-            wxConfig.signature = shasum.digest('hex')
+                str = 'jsapi_ticket='+jsapi_ticket+'&noncestr='+noncestr+'&timestamp='+timestamp+'&url='+url;
+                var list=new Array();
+                list.push('jsapi_ticket',jsapi_ticket);
+                list.push('noncestr',noncestr);
+                list.push('timestamp',timestamp);
+                list.push('url',url);
+                var stringA=list.sort().join('&=');
+                console.log('stingA',stringA);
+                var shasum = crypto.createHash('sha1').update(stringA);
+            //shasum.update(stringA);
+            var sign=shasum.digest('hex');
+            console.log('sign',sign);
+            wxConfig.signature = sign
             wxConfig.appid = appid
             wxConfig.timestamp = timestamp
             wxConfig.noncestr = noncestr
