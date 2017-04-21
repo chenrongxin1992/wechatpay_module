@@ -9,7 +9,13 @@ var tools = require('../tools/weChatTools'),
     fs = require('fs'),
     path = require('path')
 
-
+//
+exports.MP_verify_UoXtBUxJ1Hh9SUUn = function(req,res){
+    fs.readFile('./MP_verify_UoXtBUxJ1Hh9SUUn.txt',function(err,data){
+        data = data.toString()
+        res.send(data)
+    })
+}
 exports.index = function (req, res, next) {
     var str = tools.merchatPayOrderNo(tools.payTypes.APP);
     var array = new Array();
