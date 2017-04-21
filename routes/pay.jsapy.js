@@ -17,6 +17,8 @@ var https = require('https'),
     businessConfig = require('../config/businessConfig'),
     verify = require('../tools/verify');
 
+var moment = require('moment')
+
 var path = {
     placeOrder: 'https://api.mch.weixin.qq.com/pay/unifiedorder',
 };
@@ -28,7 +30,8 @@ var path = {
 var device_info = 'WEB',
     fee_type = 'CNY',
     trade_type = weChatTools.payTypes.JSAPI, //交易类型
-    notify_url = 'http://test.api.pay.178wifi.com/pay/notice'; //订单通知地址
+    //notify_url = 'http://test.api.pay.w-lans.cn/pay/notice'; //订单通知地址
+    notify_url = 'http://test.api.pay.178wifi.com/pay/notice'
 
 //下单
 exports.PlaceOrder = function (req, res, next) {
@@ -38,6 +41,8 @@ exports.PlaceOrder = function (req, res, next) {
         total_fee = req.body.fee,  //总金额
         spbill_create_ip = req.body.ip, //用户客户端IP
         openid = req.body.openid; //用户标识
+
+    var time_start = moment().format('yyyyMMddHHmmss')  //下单时间
 
     var nonce_str = weChatTools.randomStr(), //随机字符串
         attach = '',// 附加数据
@@ -74,11 +79,11 @@ exports.PlaceOrder = function (req, res, next) {
     if (!wx_order_no)
         wx_order_no = out_trade_no;
     var req_options = url.parse(path.placeOrder);
-    req_options.method = 'POST';
-    req_options.port = 443;
-    req_options.headers = {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-    };
+        req_options.method = 'POST';
+        req_options.port = 443;
+        req_options.headers = {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        };
 
     var content_data = {
             appid: config.appid,
@@ -114,6 +119,10 @@ exports.PlaceOrder = function (req, res, next) {
             ]
         },
         post_data = xml(xml_content_data);
+        console.log('key:',config.appSecret)
+        console.log(content_data)
+        console.log('sign',sign)
+        console.log(post_data)
     var post_req = https.request(req_options, function (post_res) {
         post_res.setEncoding('utf8');
         var result = '';
@@ -128,33 +137,78 @@ exports.PlaceOrder = function (req, res, next) {
             if (result.result_code == 'FAIL')
                 return res.json(exception.throwError(exception.code.downOrder[result.err_code], result.err_code_des));
             var prepay_id = result.prepay_id, code_url = result.code_url;
+
+            //20170420
+            //取得prepay_id,重新生成签名返回
+            var timeStamp =  moment().format('X'),
+                nonceStr = weChatTools.randomStr(),
+                package = 'prepay_id='+prepay_id,
+                signType = 'MD5'
+
+            var paySign_content = {
+                appId : config.appid,
+                timeStamp : timeStamp,
+                nonceStr : nonceStr,
+                package : package,
+                signType : signType
+            }
+            console.log(paySign_content)
+            console.log()
+            var paySign = weChatTools.sign(paySign_content, config.appSecret)
+            console.log('-----  paySign  -----')
+            console.log(paySign)
+            console.log()
+
             var pay = new weChatPay({
-                bid: bid,
-                appid: config.appid,
-                mch_id: config.mch_id,
-                device_info: device_info,
-                nonce_str: nonce_str,
-                sign: sign,
-                body: title,
-                attach: attach,
-                out_trade_no: out_trade_no,
-                wx_order_no: wx_order_no,
-                total_fee: total_fee,
-                spbill_create_ip: spbill_create_ip,
-                notify_url: notify_url,
-                trade_type: trade_type,
-                openid: openid,
-                prepay_id: prepay_id,
-                code_url: code_url
+                    bid: bid,
+                    appid: config.appid,
+                    mch_id: config.mch_id,
+                    device_info: device_info,
+                    nonce_str: nonce_str,
+                    sign: sign,
+                    body: title,
+                    attach: attach,
+                    out_trade_no: out_trade_no,
+                    wx_order_no: wx_order_no,
+                    total_fee: total_fee,
+                    spbill_create_ip: spbill_create_ip,
+                    notify_url: notify_url,
+                    trade_type: trade_type,
+                    openid: openid,
+                    prepay_id: prepay_id,
+                    code_url: code_url,
+                    time_start : time_start
             });
-            pay.save(function (err) {
-                console.log('AAAA');
+            pay.save(function (err,doc) {
+                if(err){
+                    console.log('------------------  err occurd  ------------------')
+                    console.error(err)
+                }
+                console.log(doc)
             });
-            return res.json(exception.success({
+            /*return res.json(exception.success({
                 orderNo: pay.wx_order_no,
                 out_trade_no: pay.out_trade_no,
-                prepay_id: pay.prepay_id
-            }));
+                prepay_id: pay.prepay_id,
+                paySign :paySign
+            }));*/
+            /*var data = {
+                appId : config.appid,
+                timeStamp : timeStamp,
+                nonceStr : nonceStr,
+                package : package,
+                signType : signType,
+                paySign : paySign
+            }
+            res.json(data)*/
+            res.locals.data = {
+                appId : config.appid,
+                timeStamp : timeStamp,
+                nonceStr : nonceStr,
+                package : package,
+                signType : signType,
+                paySign : paySign
+            }
         });
     });
     post_req.on('error', function (e) {

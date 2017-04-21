@@ -7,7 +7,8 @@ var index = require('./routes/index'),
     payJsApi = require('./routes/pay.jsapy');
 module.exports = function (app) {
     app.get('/index', index.index);
-    app.post('/pay/jsapi', payJsApi.PlaceOrder);//JSAPI支付请求
+    app.get('/paytest', index.PayTest);
+    app.post('/pay/jsapi', payJsApi.PlaceOrder);//JSAPI支付请求,获取prepay_id
     //微信回调
     app.post('/pay/notice', payJsApi.Notice); //支付消息通知
     //查询
@@ -15,4 +16,5 @@ module.exports = function (app) {
     app.post('/pay/serach/outTradeNo', payJsApi.Serach_By_OutTradeNo);//根据商户订单号查询
     app.post('/pay/serach/transactionId', payJsApi.Serach_By_TransactionId);//根据微信支付订单号查询
     //退款
+    //
 };
