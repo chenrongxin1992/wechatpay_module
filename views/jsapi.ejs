@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+    <title>支付测试</title>
+</head>
+<body>
+
+    
+
+<script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"/>
+    <script type="text/javascript">
+        wx.config({
+            debug: true,
+            appId: '<%= wxconfig.appid %>',
+            timestamp: '<%= wxconfig.timestamp %>',
+            nonceStr: '<%= wxconfig.noncestr %>',
+            signature: '<%= wxconfig.signature %>',
+            jsApiList: []
+        });
+        wx.ready(function () {
+            wx.chooseWXPay({//发起微信支付请求
+                    timeStamp: '<%= wxchoosepay.timeStamp %>',
+                    nonceStr: '<%= wxchoosepay.nonceStr %>',
+                    package: '<%= wxchoosepay.package %>',
+                    signType: 'MD5',
+                    paySign: '<%= wxchoosepay.paySign %>',
+                    success: function (res) {
+
+                            console.log('res:', res);
+                    }
+            })
+        });
+        wx.error(function () {
+
+        }); 
+         function testpay(){
+                
+        } 
+        
+
+    </script>
+   <p style="font-size: 100px" onclick="testpay()">点击支付</p>
+</body>
+</html>
