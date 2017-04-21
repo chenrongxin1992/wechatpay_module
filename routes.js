@@ -7,7 +7,7 @@ var index = require('./routes/index'),
     payJsApi = require('./routes/pay.jsapy');
 module.exports = function (app) {
     app.get('/MP_verify_UoXtBUxJ1Hh9SUUn.txt',index.MP_verify_UoXtBUxJ1Hh9SUUn)
-    app.get('/index', index.index);
+    //app.get('/index', index.index);
     //app.get('/paytest', index.PayTest);
     //测试使用地址，get方法
     app.get('/pay/jsapi', payJsApi.PlaceOrder);//JSAPI支付请求,获取prepay_id
