@@ -91,7 +91,7 @@ exports.PlaceOrder = function (req, res, next) {
                 return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
             }
             var _fee = parseInt(total_fee);
-            if (_fee <= 0) {
+            if (_fee < 0) {
                 return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
             }
             if (!spbill_create_ip) {
