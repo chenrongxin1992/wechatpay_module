@@ -27,5 +27,5 @@ exports.CheckDate=function (date) {
 
 exports.CheckNumber=function (number) {
     var number=parseFloat(number);
-    return  !isNaN(number);
+    return  isNaN(number);
 };
