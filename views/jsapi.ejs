@@ -18,7 +18,9 @@
             timestamp: '<%= wxconfig.timestamp %>',
             nonceStr: '<%= wxconfig.noncestr %>',
             signature: '<%= wxconfig.signature %>',
-            jsApiList: []
+            jsApiList: [
+                'chooseWXPay'
+            ]
         });
         wx.ready(function () {
             
