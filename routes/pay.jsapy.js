@@ -488,9 +488,9 @@ exports.Notice = function (req, res, next) {
             if (err){
                 console.log('----  update err  ----')
                 console.log(err)
-                return res.end(NoticeResponse(err.message));
+                //return res.end(NoticeResponse(err.message));
             }
-            return res.end(NoticeResponse());
+            return res.end(NoticeResponse(1));
         });
     });
 };
