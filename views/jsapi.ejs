@@ -31,7 +31,7 @@
 
         function testpay(){
             wx.chooseWXPay({//发起微信支付请求
-                timeStamp: '<%= wxchoosepay.timeStamp %>',
+                timestamp: '<%= wxchoosepay.timeStamp %>',
                 nonceStr: '<%= wxchoosepay.nonceStr %>',
                 package: '<%= wxchoosepay.package %>',
                 signType: 'MD5',
