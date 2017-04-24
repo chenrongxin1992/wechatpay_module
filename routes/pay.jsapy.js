@@ -528,7 +528,7 @@ exports.closeOrder = function(req,res){
             res.json({'Msg':'doc is null'})
         }
 
-        if(doc.is_close === 1){
+        if(doc.is_done === 1){
             return res.json(exception.throwError(exception.code.error, '该订单已关闭'))
         }
         var time_start = moment(doc.time_start,'YYYYMMDDHHmmss').format('X')
@@ -539,7 +539,7 @@ exports.closeOrder = function(req,res){
         console.log('now_time: ',now_time)
 
         if((now_time - time_start) < 300 ){//订单生成后不能马上调用关单接口，最短调用时间间隔为5分钟。
-            res.json(exception.throwError(exception.code.error, '订单生成后不能马上调用关单接口，最短调用时间间隔为5分钟'))
+            return res.json(exception.throwError(exception.code.error, '订单生成后不能马上调用关单接口，最短调用时间间隔为5分钟'))
         }
 
         var nonce_str = weChatTools.randomStr(),
