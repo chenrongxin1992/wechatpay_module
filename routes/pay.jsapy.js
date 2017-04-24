@@ -204,7 +204,8 @@ exports.PlaceOrder = function (req, res, next) {
                             openid: openid,
                             prepay_id: prepay_id,
                             code_url: code_url,
-                            time_start : time_start
+                            time_start : time_start,
+                            last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss')//最后更新时间
                     });
                     pay.save(function (err,doc) {
                         if(err){
