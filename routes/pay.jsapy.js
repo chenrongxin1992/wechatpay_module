@@ -17,6 +17,7 @@ var https = require('https'),
     businessConfig = require('../config/businessConfig'),
     getWxConfig = require('./index'),
     async = require('async'),
+    http = require('http'),
     verify = require('../tools/verify');
 
 var moment = require('moment')
@@ -472,7 +473,8 @@ exports.Notice = function (req, res, next) {
             time_end: moment(str.time_end, 'YYYYMMDDHHmmss').format('X'),//格式化时间
             time_end_origin : str.time_end,//没有进行格式化时间
             last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),//最后更新时间
-            is_done : 1
+            is_done : 1,
+            msg : 'order paid'
         };
         //非必传参数
         if (str.bank_type)
@@ -504,12 +506,16 @@ exports.Notice = function (req, res, next) {
  *  @Require args : appid,mch_id,out_trade_no,nonce_str,sign
  */
 exports.closeOrder = function(req,res){
+    if(!req.body.bid){
+        return res.json(exception.throwError(exception.code.error, 'bid can not be null'))
+    }
     if(!req.body.out_trade_no){
         return res.json(exception.throwError(exception.code.error, 'out_trade_no can not be null'))
     }
-    var out_trade_no = req.body.out_trade_no
-
-    weChatPay.find({out_trade_no:out_trade_no},function(err,doc){
+    var out_trade_no = req.body.out_trade_no,
+        bid = req.body.bid
+    var config = businessConfig[bid];
+    weChatPay.findOne({out_trade_no:out_trade_no},function(err,doc){
         if(err){
             console.log('-----  search err  -----')
             console.error(err)
@@ -522,6 +528,9 @@ exports.closeOrder = function(req,res){
             res.json({'Msg':'doc is null'})
         }
 
+        if(doc.is_close === 1){
+            return res.json(exception.throwError(exception.code.error, '该订单已关闭'))
+        }
         var time_start = moment(doc.time_start,'YYYYMMDDHHmmss').format('X')
             now_time = moment(Date.now()).format('X')
 
@@ -554,30 +563,33 @@ exports.closeOrder = function(req,res){
         console.log('sign: ',sign)
         console.log('post_data: ',post_data)
 
-        var options = url.parse(path.closeOrder);
-            options.method = 'POST';
-            options.port = 443;
-            options.headers = {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-            }
-        var req = https.request(options, function (res) {
-            res.setEncoding('utf8');
-            var result = '';
-            res.on('data', function (chunk) {
-                result += chunk;
-            });
-            res.on('end', function () {
-                result = weChatTools.xmlToJson(result);
-                console.log('result:', result);
-                if (result.return_code == 'FAIL')
-                    return res.json(exception.throwError(exception.code.error, result.return_msg));
-                if (result.result_code == 'FAIL')
-                    return res.json(exception.throwError(exception.code.downOrder[result.err_code], result.err_code_des));
-                    
+        var req_options = url.parse(path.closeOrder);
+            req_options.method = 'POST';
+            req_options.port = 443;
+            req_options.headers = {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        };
+
+        var close_req = https.request(req_options,function(close_res){
+            console.log('-----  https request  -----')
+            close_res.setEncoding('utf8')
+            var result = ''
+            close_res.on('data',function(chunk){
+                result += chunk
+            })
+            close_res.on('end',function(){
+                console.log('-----  https request end  -----')
+                result = weChatTools.xmlToJson(result)
+                console.log(result)
+                if(result.return_code == 'FAIL')
+                    return res.json(exception.throwError(exception.code.error, result.return_msg))
+                if(result.result_code == 'FAIL')
+                    return res.json(exception.throwError(result.err_code,result.err_code_des))
                 //关闭成功
                 var content = {
                     is_close : 1,
-                    last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss')
+                    last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
+                    msg : 'close order'
                 }
                 //更新记录
                 weChatPay.UpdateById(doc._id,content,function(err){
@@ -586,17 +598,18 @@ exports.closeOrder = function(req,res){
                         console.error(err)
                         res.json({'err':err})
                     }
-                    console.log('----- closeOrder done  -----')
+                    console.log('----- closeOrder done  ----')
                     res.json({'result':'success'})
                 })
-            });
-            req.on('error', function (e) {
-                console.log('error:', e);
-                return res.json({'error':e});
-            });
-            req.write(post_data);
-            req.end();
+            })
+
         })
+        close_req.on('error',function(e){
+            console.log('-----  request error  -----')
+            console.error(e)
+        })
+        close_req.write(post_data)
+        close_req.end()
     })
 }
 

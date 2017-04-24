@@ -86,6 +86,10 @@ var WeChatPayOrder = new mongoose.Schema({
     is_close : {//订单是否请求关闭，0否，1是
         type : Number,
         default : 0
+    },
+    msg : {
+        type : String,
+        default : null
     }
 });
 
