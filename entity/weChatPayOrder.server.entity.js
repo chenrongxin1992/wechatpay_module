@@ -45,7 +45,7 @@ var WeChatPayOrder = new mongoose.Schema({
         require: true
     },
     spbill_create_ip: String,//APP和网页支付提交用户端ＩＰ
-    time_start: String, //订单生成时间 格式 yyyyMMddHHmmss
+    time_start: String, //订单生成时间 格式 YYYYMMDDHHmmss
     time_expire: String, //订单结束时间  结束时间必须大于开始时间至少5分钟
     goods_tag: String, //商品标记
     notify_url: String,  //通知地址 通知回调地址
@@ -77,7 +77,7 @@ var WeChatPayOrder = new mongoose.Schema({
         type: Date,
         default: Date.now()
     },
-    time_end_origin:String,
+    time_end_origin:String,//原始格式结束时间
     last_modify_time:String
 });
 

@@ -469,7 +469,7 @@ exports.Notice = function (req, res, next) {
             transaction_id: str.transaction_id,
             time_end: moment(str.time_end, 'YYYYMMDDHHmmss').format('X'),//格式化时间
             time_end_origin : str.time_end,//没有进行格式化时间
-            last_modify_time : moment().format('YYYYMMDDHHmmss')//最后更新时间
+            last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss')//最后更新时间
         };
         //非必传参数
         if (str.bank_type)
