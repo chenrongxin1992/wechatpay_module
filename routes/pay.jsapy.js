@@ -585,24 +585,25 @@ exports.closeOrder = function(req,res){
                     return res.json(exception.throwError(exception.code.error, result.return_msg))
                 if(result.result_code == 'FAIL')
                     return res.json(exception.throwError(result.err_code,result.err_code_des))
-                //关闭成功
-                var content = {
-                    is_close : 1,
-                    last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
-                    msg : 'close order'
-                }
-                //更新记录
-                weChatPay.UpdateById(doc._id,content,function(err){
-                    if(err){
-                        console.log('-----  update err  -----')
-                        console.error(err)
-                        res.json({'err':err})
+                if(result.result_code == 'SUCCESS'){
+                    //关闭成功
+                    var content = {
+                        is_close : 1,
+                        last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
+                        msg : 'close order'
                     }
-                    console.log('----- closeOrder done  ----')
-                    res.json({'result':'success'})
-                })
+                    //更新记录
+                    weChatPay.UpdateById(doc._id,content,function(err){
+                        if(err){
+                            console.log('-----  update err  -----')
+                            console.error(err)
+                            res.json({'err':err})
+                        }
+                        console.log('----- closeOrder done  ----')
+                        res.json({'result':'success'})
+                    })
+                }
             })
-
         })
         close_req.on('error',function(e){
             console.log('-----  request error  -----')
