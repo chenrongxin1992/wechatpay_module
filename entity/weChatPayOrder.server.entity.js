@@ -133,16 +133,22 @@ WeChatPayOrder.statics.ToJson = function (doc) {
         feeType: doc.fee_type,//支付货币类型 默认CNY 人民币
         totalFee: doc.total_fee, //支付总金额 单位：分
         ip: doc.spbill_create_ip, //支付客户端IP
-        timeStart: doc.timeStart,//订单生成时间
+        timeStart: doc.time_start,//订单生成时间
         timeExprie: doc.time_expire,//订单结束时间
         tradeType: doc.trade_type,//交易类型
         openid: doc.openid,
         isSubscribe: doc.is_subscribe,//是否关注公众号
-        setttlementTotalFee: doc.setttlementTotalFee,//应该结算金额
+        setttlementTotalFee: doc.settlement_total_fee,//应该结算金额
         cashFee: doc.cash_fee,//现金支付金额
         cashFeeType: doc.cash_fee_type,//现金支付货币类型
         transactionId: doc.transaction_id,//微信支付订单号
-        timeEnd: doc.time_end,//支付完成时间
+        timeEnd: doc.time_end,//支付完成时间,
+        is_done:doc.is_done,//是否支付完成
+        is_close:doc.is_close,//是否关闭订单
+        time_end:doc.time_end,//订单完成时间，格式化微信返回时间
+        time_end_origin:doc.time_end_origin,//订单完成时间，微信返回
+        last_modify_time:doc.last_modify_time,//最后修改时间
+        msg:doc.msg//信息
     };
     return result;
 };

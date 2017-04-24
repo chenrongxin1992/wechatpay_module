@@ -36,13 +36,17 @@
                 package: '<%= wxchoosepay.package %>',
                 signType: 'MD5',
                 paySign: '<%= wxchoosepay.paySign %>',
-                success: function (res) {alert(res)
-                    console.log('res:', res);
-                    if(res.err_msg === 'get_brand_wcpay_request:ok'){
-                        alert('支付成功，返回订单列表！');
-                    }else if(res.err_msg === 'get_brand_wcpay_request:cancel'){
+                success: function (res) {
+                    console.log('----- 支付成功回调  -----');
+                    console.log(res)
+                    if(res.errMsg == "chooseWXPay:ok"){
+                        alert('支付成功！');
+                    }else if(res.errMsg == "chooseWXPay:cancel"){
                         alert('取消支付！');
                     }
+                }
+                cancel: function(res){
+
                 }
             })
         } 
