@@ -19,6 +19,9 @@ module.exports = function (app) {
     app.post('/pay/serach/orderNo', payJsApi.Serach_By_OrderNo);//根据订单号查询
     app.post('/pay/serach/outTradeNo', payJsApi.Serach_By_OutTradeNo);//根据商户订单号查询
     app.post('/pay/serach/transactionId', payJsApi.Serach_By_TransactionId);//根据微信支付订单号查询
+
+    //关闭订单
+    app.post('/pay/closeorder',payJsApi.closeOrder)
     //退款
     //
 };

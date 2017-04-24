@@ -23,6 +23,7 @@ var moment = require('moment')
 
 var path = {
     placeOrder: 'https://api.mch.weixin.qq.com/pay/unifiedorder',
+    closeOrder: 'https://api.mch.weixin.qq.com/pay/closeorder'
 };
 
 // appid = 'wxe8eb1beadd82b467',
@@ -496,6 +497,108 @@ exports.Notice = function (req, res, next) {
         });
     });
 };
+
+/**
+ *  @API：关闭订单
+ *  @Create Date :  2017-04-24
+ *  @Require args : appid,mch_id,out_trade_no,nonce_str,sign
+ */
+exports.closeOrder = function(req,res){
+    if(!req.body.out_trade_no){
+        return res.json(exception.throwError(exception.code.error, 'out_trade_no can not be null'))
+    }
+    var out_trade_no = req.body.out_trade_no
+
+    weChatPay.find({out_trade_no:out_trade_no},function(err,doc){
+        if(err){
+            console.log('-----  search err  -----')
+            console.error(err)
+            res.json({'error':err})
+        }
+        console.log('-----  check search result  -----')
+        console.log(doc)
+        if(!doc){
+            console.log('-----  search result is null  -----')
+            res.json({'Msg':'doc is null'})
+        }
+
+        var time_start = moment(doc.time_start,'YYYYMMDDHHmmss').format('X')
+            now_time = moment(Date.now()).format('X')
+
+        console.log('-----  check time  -----')
+        console.log('time_start: ',time_start)
+        console.log('now_time: ',now_time)
+
+        if((now_time - time_start) < 300 ){//订单生成后不能马上调用关单接口，最短调用时间间隔为5分钟。
+            res.json(exception.throwError(exception.code.error, '订单生成后不能马上调用关单接口，最短调用时间间隔为5分钟'))
+        }
+
+        var nonce_str = weChatTools.randomStr(),
+            sign_data = {
+                appid: config.appid,
+                mch_id: config.mch_id,
+                nonce_str : nonce_str,
+                out_trade_no : out_trade_no,
+            },
+            sign = weChatTools.sign(sign_data, config.appSecret),
+            xml_content_data = {
+                xml: [
+                    {appid: config.appid},
+                    {mch_id: config.mch_id},
+                    {nonce_str: nonce_str},
+                    {out_trade_no: out_trade_no},
+                    {sign: sign}
+                ]
+            },
+            post_data = xml(xml_content_data);
+        console.log('sign: ',sign)
+        console.log('post_data: ',post_data)
+
+        var options = url.parse(path.closeOrder);
+            options.method = 'POST';
+            options.port = 443;
+            options.headers = {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            }
+        var req = https.request(options, function (res) {
+            res.setEncoding('utf8');
+            var result = '';
+            res.on('data', function (chunk) {
+                result += chunk;
+            });
+            res.on('end', function () {
+                result = weChatTools.xmlToJson(result);
+                console.log('result:', result);
+                if (result.return_code == 'FAIL')
+                    return res.json(exception.throwError(exception.code.error, result.return_msg));
+                if (result.result_code == 'FAIL')
+                    return res.json(exception.throwError(exception.code.downOrder[result.err_code], result.err_code_des));
+                    
+                //关闭成功
+                var content = {
+                    is_close : 1,
+                    last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss')
+                }
+                //更新记录
+                weChatPay.UpdateById(doc._id,content,function(err){
+                    if(err){
+                        console.log('-----  update err  -----')
+                        console.error(err)
+                        res.json({'err':err})
+                    }
+                    console.log('----- closeOrder done  -----')
+                    res.json({'result':'success'})
+                })
+            });
+            req.on('error', function (e) {
+                console.log('error:', e);
+                return res.json({'error':e});
+            });
+            req.write(post_data);
+            req.end();
+        })
+    })
+}
 
 //根据传入的订单号查询订单
 exports.Serach_By_OrderNo = function (req, res, next) {
