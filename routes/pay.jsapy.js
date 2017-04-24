@@ -57,9 +57,6 @@ exports.PlaceOrder = function (req, res, next) {
                 spbill_create_ip = req.body.ip, //用户客户端IP
                 openid = req.body.openid; //用户标识*/
 
-            console.log('----- 22  -----')
-            console.log(arg)
-
             //测试数据
             var bid = '0',  //商圈编号
                 title = 'ceshi',  //商品描述
@@ -67,8 +64,10 @@ exports.PlaceOrder = function (req, res, next) {
                 total_fee = 1,  //总金额
                 spbill_create_ip = req.headers['x-forwarded-for'], //用户客户端IP
                 openid = 'or0Yltxu45dWsOsJVp9VchNKsUrA'; //用户标识
-            console.log('ip:',spbill_create_ip)
+            console.log('客户端ip:',spbill_create_ip)
             var time_start = moment().format('YYYYMMDDHHmmss')  //下单时间
+            console.log('---------  下单时间  ---------')
+            console.log(time_start)
 
             var nonce_str = weChatTools.randomStr(), //随机字符串
                 attach = '',// 附加数据
@@ -145,7 +144,7 @@ exports.PlaceOrder = function (req, res, next) {
                     ]
                 },
                 post_data = xml(xml_content_data);
-                console.log('key:',config.appSecret)
+                console.log('秘钥 key:',config.appSecret)
                 console.log(content_data)
                 console.log('sign',sign)
                 console.log(post_data)
@@ -250,7 +249,7 @@ exports.PlaceOrder = function (req, res, next) {
             console.log('---- err ----')
             console.log(err)
         }
-        console.log('----- result  ------')
+        console.log('----- final result  ------')
         console.log(arg1)
         console.log(arg2)
         res.locals.wxconfig = arg1
@@ -267,7 +266,9 @@ exports.PlaceOrder_bk = function (req, res, next) {
         spbill_create_ip = req.body.ip, //用户客户端IP
         openid = req.body.openid; //用户标识
 
-    var time_start = moment().format('yyyyMMddHHmmss')  //下单时间
+    var time_start = moment().format('YYYYMMDDHHmmss')  //下单时间
+    console.log('------------  下单时间  ------------')
+    console.log(time_start)
 
     var nonce_str = weChatTools.randomStr(), //随机字符串
         attach = '',// 附加数据
@@ -469,7 +470,8 @@ exports.Notice = function (req, res, next) {
             transaction_id: str.transaction_id,
             time_end: moment(str.time_end, 'YYYYMMDDHHmmss').format('X'),//格式化时间
             time_end_origin : str.time_end,//没有进行格式化时间
-            last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss')//最后更新时间
+            last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),//最后更新时间
+            is_done : 1
         };
         //非必传参数
         if (str.bank_type)

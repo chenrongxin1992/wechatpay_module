@@ -78,7 +78,11 @@ var WeChatPayOrder = new mongoose.Schema({
         default: Date.now()
     },
     time_end_origin:String,//原始格式结束时间
-    last_modify_time:String
+    last_modify_time:String,
+    is_done : { //订单是否完成，0否，1是
+        type : Number,
+        default : 0
+    }
 });
 
 /**
