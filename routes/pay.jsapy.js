@@ -17,25 +17,21 @@ var https = require('https'),
     businessConfig = require('../config/businessConfig'),
     getWxConfig = require('./index'),
     async = require('async'),
-    http = require('http'),
+    fs = require('fs'),
+    moment = require('moment'),
     verify = require('../tools/verify');
-
-var moment = require('moment')
 
 var path = {
     placeOrder: 'https://api.mch.weixin.qq.com/pay/unifiedorder',
-    closeOrder: 'https://api.mch.weixin.qq.com/pay/closeorder'
+    closeOrder: 'https://api.mch.weixin.qq.com/pay/closeorder',
+    refund : 'https://api.mch.weixin.qq.com/secapi/pay/refund'
 };
-
-// appid = 'wxe8eb1beadd82b467',
-//    appSecret = 'NDg2NmU0Yzk4NmFlNDU3ZDg1MGNiZWQw',  //'a6ace07aca119a46abc462d7fd42efe1','NDg2NmU0Yzk4NmFlNDU3ZDg1MGNiZWQwMjM2Y2VhOTk'
-//    mch_id = '1297554801',
 
 var device_info = 'WEB',
     fee_type = 'CNY',
     trade_type = weChatTools.payTypes.JSAPI, //交易类型
     //notify_url = 'http://test.api.pay.w-lans.cn/pay/notice'; //订单通知地址
-    notify_url = 'http://test.pay.178wifi.com/pay/notice'
+    notify_url = 'http://test.pay.178wifi.com/pay/notice'//订单通知地址
 
 /**
  *  @API：下订单
@@ -67,7 +63,7 @@ exports.PlaceOrder = function (req, res, next) {
             var bid = '0',  //商圈编号
                 title = 'ceshi',  //商品描述
                 wx_order_no = '', //订单号  非必传，
-                total_fee = 1,  //总金额
+                total_fee = 5,  //总金额
                 spbill_create_ip = req.headers['x-forwarded-for'], //用户客户端IP
                 openid = 'or0Yltxu45dWsOsJVp9VchNKsUrA'; //用户标识
             console.log('客户端ip:',spbill_create_ip)
@@ -675,7 +671,7 @@ exports.PlaceOrder_bk = function (req, res, next) {
     post_req.write(post_data);
     post_req.end();
 };
-//支付结果通知
+//微信回调通知
 exports.Notice = function (req, res, next) {
     var str = JSON.stringify(req.body);
     str = weChatTools.xmlToJson(str);
@@ -732,7 +728,7 @@ exports.Notice = function (req, res, next) {
 /**
  *  @API：关闭订单
  *  @Create Date :  2017-04-24
- *  @Require args : bid = 0,appid,mch_id,out_trade_no,nonce_str,sign
+ *  @Require args : bid = 0,out_trade_no
  */
 exports.closeOrder = function(req,res){
     if(!req.body.bid){
@@ -842,8 +838,380 @@ exports.closeOrder = function(req,res){
         close_req.end()
     })
 }
+/**
+ *  @API：退款
+ *  @Create Date :  2017-04-25
+ *  @Require args : bid = 0, transaction_id || out_trade_no, sign, total_fee, refund_fee
+ */ 
+exports.refund = function(req,res){
+    if(!req.body.bid){
+        return res.json(exception.throwError(exception.code.error,'bid不能为空'))
+    }
+    if(!req.body.transaction_id && !req.body.out_trade_no){
+        return res.json(exception.throwError(exception.code.error,'微信订单号和商户订单号不能同时为空'))
+    }
+    if(!req.body.refund_fee){
+        return res.json(exception.throwError(exception.code.error,'refund_fee不能为空'))
+    }
+    if(!req.body.total_fee){
+        return res.json(exception.throwError(exception.code.error,'total_fee不能为空'))
+    }
+    
+    // var is_all = req.body.is_all ? 1 : 0 //默认全部退款(默认1)
 
-//根据传入的订单号查询订单
+    var bid = req.body.bid,
+        transaction_id = req.body.transaction_id,
+        out_trade_no = req.body.out_trade_no,
+        refund_fee = parseInt(req.body.refund_fee),
+        total_fee = parseInt(req.body.total_fee),
+        config = businessConfig[bid],
+        refund_time = moment(Date.now()).format('YYYYMMDDHHmmss'),
+        appid = config.appid,
+        mch_id = config.mch_id,
+        op_user_id = config.mch_id,
+        nonce_str = weChatTools.randomStr(),
+        out_refund_no = weChatTools.merchatPayOrderNo(trade_type)
+
+    if(refund_fee === total_fee){//全部退款
+        async.waterfall([
+            function(cb){//订单不存在或者交易时间超过一年，直接返回
+                weChatPay.findOne({'$or' : [{'transaction_id':transaction_id},{'out_trade_no':out_trade_no}]},function(err,doc){
+                    if(err){
+                        console.log('-----  search err  -----')
+                        console.error(err)
+                        cb(err)
+                    }
+                    if(!doc){
+                        console.log('-----  doc is null  -----')
+                        cb('订单不存在')
+                    }
+                    var order_time_end_origin = moment(doc.time_end_origin,'YYYYMMDDHHmmss').format('X'),
+                        now_time = moment().format('X')
+                    console.log('-----  订单交易时间  -----')
+                    console.log(order_time_end_origin)
+                    console.log(now_time)
+                    if(now_time - order_time_end_origin > 31536000){
+                        console.log('-----  交易时间超过1年  -----')
+                        cb('交易时间超过1年')
+                    }
+                    if(total_fee != doc.total_fee){
+                        console.log('-----  交易total_fee金额有误  -----')
+                        cb('交易total_fee金额有误')
+                    }
+                    cb(null,doc)
+                })
+            },
+            function(doc,cb){
+                if(doc.is_refund == 1 && doc.is_refund_done ==0){//(一笔退款失败后的重新提交, 需采用原来的退款单号.)
+                    console.log('-----  该订单退款过，但未成功  -----')
+                    console.log('new out_refund_no: ',out_refund_no)
+                    out_refund_no = doc.out_refund_no
+                    console.log('use old out_refund_no: ',out_refund_no)
+                }
+                console.log('-----  doc result  -----')
+                console.log(doc)
+                var sign_data = {
+                    appid : appid,
+                    mch_id : mch_id,
+                    op_user_id : mch_id,
+                    nonce_str : nonce_str,
+                    out_refund_no : out_refund_no,//唯一退款单号
+                    out_trade_no : out_trade_no,
+                    refund_fee : refund_fee,
+                    total_fee : total_fee
+                },
+                sign = weChatTools.sign(sign_data, config.appSecret),
+                xml_content_data = {
+                    xml:[
+                        {appid: appid},
+                        {mch_id: mch_id},
+                        {nonce_str: nonce_str},
+                        {sign: sign},
+                        {out_refund_no:out_refund_no},
+                        {out_trade_no: out_trade_no},
+                        {total_fee : total_fee},
+                        {refund_fee : total_fee},
+                        {op_user_id : mch_id}
+                    ]
+                },
+                post_data = xml(xml_content_data)
+                console.log('sign_data: ',sign_data)
+                console.log('sign: ',sign)
+                console.log('post_data: ',post_data)
+
+                var req_options = url.parse(path.refund);
+                    req_options.method = 'POST';
+                    req_options.port = 443;
+                    req_options.pfx = fs.readFileSync('./apiclient_cert.p12');
+                    req_options.passphrase = '1297554801';
+                    req_options.agent = false;
+                    req_options.headers = {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                };
+
+                var refund_req = https.request(req_options,function(refund_res){
+                    console.log('-----  https request  -----')
+                    refund_res.setEncoding('utf8')
+                    var result = ''
+                    refund_res.on('data',function(chunk){
+                        result += chunk
+                    })
+                    refund_res.on('end',function(){
+                        console.log('-----  https request end  -----')
+                        result = weChatTools.xmlToJson(result)
+                        console.log(result)
+                        if(result.return_code == 'FAIL')
+                            return res.json(exception.throwError(exception.code.error, result.return_msg))
+                        if(result.result_code == 'FAIL'){
+                            //申请成功，但是退款不成功
+                            console.log('-----  申请成功，但是退款不成功  -----')
+                            var content = {
+                                is_refund : 1,//0标识申请过退款
+                                is_refund_done : 0,//0标识退款失败
+                                refund_times : doc.refund_times + 1,
+                                last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
+                                refund_time : refund_time,
+                                out_refund_no : out_refund_no,
+                                refund_total_fee : total_fee,
+                                refund_fee : refund_fee,
+                                msg : result.err_code_des,
+                                total_fee_left : total_fee
+                            }
+                            weChatPay.UpdateById(doc._id,content,function(err){
+                                if(err){
+                                    console.log('-----  update err  -----')
+                                    console.error(err)
+                                    cb('update err')
+                                }
+                                 return res.json(exception.throwError(result.err_code,result.err_code_des))
+                            })
+                        }
+                        if(result.result_code == 'SUCCESS'){
+                            //退款成功
+                            var content = {
+                                is_refund : 1,
+                                is_refund_done : 1,
+                                refund_times : doc.refund_times + 1,//退款次数
+                                refund_done_times : doc.refund_done_times +1,//退款成功次数
+                                last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
+                                refund_time : refund_time,
+                                refund_id : result.refund_id,
+                                out_refund_no : out_refund_no,
+                                refund_total_fee : total_fee,
+                                refund_fee : refund_fee,
+                                msg : '退款处理成功',
+                                total_fee_left : 0
+                            }
+                            //更新记录
+                            weChatPay.UpdateById(doc._id,content,function(err){
+                                if(err){
+                                    console.log('-----  update err  -----')
+                                    console.error(err)
+                                    cb('update err')
+                                }
+                                cb(null)
+                            })
+                        }//success
+                    })
+                })
+                refund_req.on('error',function(e){
+                    console.log('-----  request error  -----')
+                    console.error(e)
+                })
+                refund_req.write(post_data)
+                refund_req.end()
+            }
+        ],function(err,result){
+            if(err){
+                console.log('-----  async err  -----')
+                console.error(err)
+                return res.json({'err':err})
+            }
+            return res.json({'result':'success'})
+        })
+    }
+    if(refund_fee < total_fee){//部分退款
+        async.waterfall([
+            function(cb){//订单不存在或者交易时间超过一年，直接返回
+                weChatPay.findOne({'$or' : [{'transaction_id':transaction_id},{'out_trade_no':out_trade_no}]},function(err,doc){
+                    if(err){
+                        console.log('-----  search err  -----')
+                        console.error(err)
+                        cb(err)
+                    }
+                    if(!doc){
+                        console.log('-----  doc is null  -----')
+                        cb('订单不存在')
+                    }
+                    var order_time_end_origin = moment(doc.time_end_origin,'YYYYMMDDHHmmss').format('X'),
+                        now_time = moment().format('X')
+                    console.log('-----  订单交易时间  -----')
+                    console.log(order_time_end_origin)
+                    console.log(now_time)
+                    if(now_time - order_time_end_origin > 31536000){
+                        console.log('-----  交易时间超过1年  -----')
+                        cb('交易时间超过1年')
+                    }
+                    // if(total_fee != doc.total_fee){
+                    //     console.log('-----  交易total_fee金额有误  -----')
+                    //     return cb('交易total_fee金额有误')
+                    // }
+                    cb(null,doc)
+                })
+            },
+            function(doc,cb){
+                if(refund_fee > doc.total_fee_left){
+                    console.log('-----  剩余金额不足以退款  -----')
+                    cb('剩余金额不足以退款')
+                }
+                if(doc.is_refund == 1 && doc.is_refund_done == 0){//(一笔退款失败后的重新提交, 需采用原来的退款单号.)
+                    console.log('-----  该订单退款过，但未成功  -----')
+                    console.log('new out_refund_no: ',out_refund_no)
+                    out_refund_no = doc.out_refund_no
+                    console.log('use old out_refund_no: ',out_refund_no)
+                }
+
+                console.log('-----  doc result  -----')
+                console.log(doc)
+
+                var sign_data = {
+                    appid : appid,
+                    mch_id : mch_id,
+                    op_user_id : mch_id,
+                    nonce_str : nonce_str,
+                    out_refund_no : out_refund_no,//唯一退款单号
+                    out_trade_no : out_trade_no,
+                    refund_fee : refund_fee,
+                    total_fee : total_fee
+                },
+                sign = weChatTools.sign(sign_data, config.appSecret),
+                xml_content_data = {
+                    xml:[
+                        {appid: appid},
+                        {mch_id: mch_id},
+                        {nonce_str: nonce_str},
+                        {sign: sign},
+                        {out_refund_no:out_refund_no},
+                        {out_trade_no: out_trade_no},
+                        {total_fee : total_fee},
+                        {refund_fee : total_fee},
+                        {op_user_id : mch_id}
+                    ]
+                },
+                post_data = xml(xml_content_data)
+                console.log('sign_data: ',sign_data)
+                console.log('sign: ',sign)
+                console.log('post_data: ',post_data)
+
+                var req_options = url.parse(path.refund);
+                    req_options.method = 'POST';
+                    req_options.port = 443;
+                    req_options.pfx = fs.readFileSync('./apiclient_cert.p12');
+                    req_options.passphrase = '1297554801';
+                    req_options.agent = false;
+                    req_options.headers = {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                };
+
+                var refund_req = https.request(req_options,function(refund_res){
+                    console.log('-----  https request  -----')
+                    refund_res.setEncoding('utf8')
+                    var result = ''
+                    refund_res.on('data',function(chunk){
+                        result += chunk
+                    })
+                    refund_res.on('end',function(){
+                        console.log('-----  https request end  -----')
+                        result = weChatTools.xmlToJson(result)
+                        console.log(result)
+                        if(result.return_code == 'FAIL')
+                            return res.json(exception.throwError(exception.code.error, result.return_msg))
+                        if(result.result_code == 'FAIL'){
+                            //申请成功，但是退款不成功
+                            console.log('-----  申请成功，但是退款不成功  -----')
+                            var content = {
+                                is_refund : 1,//0标识申请过退款
+                                is_refund_done : 0,//0标识退款失败
+                                refund_times : doc.refund_times + 1,
+                                last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
+                                refund_time : refund_time,
+                                out_refund_no : out_refund_no,
+                                refund_total_fee : total_fee,
+                                refund_fee : refund_fee,
+                                msg : result.err_code_des
+                            }
+                            weChatPay.UpdateById(doc._id,content,function(err){
+                                if(err){
+                                    console.log('-----  update err  -----')
+                                    console.error(err)
+                                    cb('update err')
+                                }
+                                 return res.json(exception.throwError(result.err_code,result.err_code_des))
+                            })
+                        }
+                        if(result.result_code == 'SUCCESS'){
+                            //退款成功
+                            var name = out_refund_no_ + doc.refund_times
+                            console.log('name: ',name)
+                            weChatPay.addStat(name,function(err){
+                                if(err){
+                                    console.log('-----  add stat err  -----')
+                                    console.error(err)
+                                    cb('add stat err')
+                                }
+                                console.log('-----  add stat success  -----')
+                                var content = {
+                                    is_refund : 1,
+                                    is_refund_done : 1,
+                                    refund_times : doc.refund_times + 1,
+                                    refund_done_times : doc.refund_done_times + 1,
+                                    last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
+                                    refund_time : refund_time,
+                                    refund_id : result.refund_id,
+                                    name : out_refund_no,
+                                    refund_total_fee : total_fee,
+                                    refund_fee : refund_fee,
+                                    msg : '退款处理成功',
+                                    total_fee_left : total_fee - refund_fee
+                                }
+                                //更新记录
+                                weChatPay.UpdateById(doc._id,content,function(err){
+                                    if(err){
+                                        console.log('-----  update err  -----')
+                                        console.error(err)
+                                        cb('update err')
+                                    }
+                                    cb(null)
+                                })
+                            })
+                        }//success
+                    })
+                })
+                refund_req.on('error',function(e){
+                    console.log('-----  request error  -----')
+                    console.error(e)
+                })
+                refund_req.write(post_data)
+                refund_req.end()
+            }
+        ],function(err,result){
+            if(err){
+                console.log('-----  async err  -----')
+                console.error(err)
+                return res.json({'err':err})
+            }
+            return res.json({'result':'success'})
+        })
+    }
+    if(refund_fee > total_fee){
+        return res.json(exception.throwError(exception.code.error,'refund_fee > total_fee'))
+    }
+}
+/**
+ *  @API：订单号查询
+ *  @Create Date :  2017-04-25
+ *  @Require args : bid = 0, orderNo
+ */ 
 exports.Serach_By_OrderNo = function (req, res, next) {
     var bid = req.body.bid,
         orderNo = req.body.orderNo;
@@ -863,7 +1231,11 @@ exports.Serach_By_OrderNo = function (req, res, next) {
         return res.json(exception.success(weChatPay.ToJson(doc)));
     });
 };
-//根据商户订单号查询订单
+/**
+ *  @API：商户号查询
+ *  @Create Date :  2017-04-25
+ *  @Require args : bid = 0, out_trade_no
+ */ 
 exports.Serach_By_OutTradeNo = function (req, res, next) {
     var bid = req.body.bid,
         orderNo = req.body.outTradeNo;
@@ -883,7 +1255,11 @@ exports.Serach_By_OutTradeNo = function (req, res, next) {
         return res.json(exception.success(weChatPay.ToJson(doc)));
     });
 };
-//根据微信支付订单号查询订单
+/**
+ *  @API：微信订单号查询
+ *  @Create Date :  2017-04-25
+ *  @Require args : bid = 0, transaction_id
+ */ 
 exports.Serach_By_TransactionId = function (req, res, next) {
     var bid = req.body.bid,
         orderNo = req.body.transactionId;

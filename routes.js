@@ -23,5 +23,5 @@ module.exports = function (app) {
     //关闭订单
     app.post('/pay/closeorder',payJsApi.closeOrder)
     //退款
-    //
+    app.post('/pay/refund',payJsApi.refund)
 };
