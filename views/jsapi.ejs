@@ -32,9 +32,9 @@
                 package: '<%= wxchoosepay.package %>',
                 signType: 'MD5',
                 paySign: '<%= wxchoosepay.paySign %>',
-                success: function (res) {
-                    var result = JSON.stringify(res)
-                    alert(result)
+                success: function (result) {
+                    //var result = JSON.stringify(res)
+                    alert(result.errMsg)
                     if(result.errMsg == "chooseWXPay:ok"){
                         alert('支付成功！');
                     }else if(result.errMsg == "chooseWXPay:cancel"){
