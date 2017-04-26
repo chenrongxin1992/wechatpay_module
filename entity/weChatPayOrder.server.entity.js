@@ -187,7 +187,17 @@ WeChatPayOrder.statics.ToJson = function (doc) {
         time_end:doc.time_end,//订单完成时间，格式化微信返回时间
         time_end_origin:doc.time_end_origin,//订单完成时间，微信返回
         last_modify_time:doc.last_modify_time,//最后修改时间
-        msg:doc.msg//信息
+        msg:doc.msg,//信息
+        is_refund:doc.is_refund,
+        is_refund_done:doc.is_refund_done,
+        refund_times:doc.refund_times,
+        refund_done_times:doc.refund_done_times,
+        refund_time:doc.refund_time,
+        refund_id:doc.refund_id,
+        out_refund_no:doc.out_refund_no,
+        refund_fee:doc.refund_fee,
+        total_fee_left:doc.total_fee_left,
+        refund_total_fee:doc.refund_total_fee
     };
     return result;
 };
