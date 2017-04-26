@@ -754,12 +754,9 @@ exports.refund = function(req,res){
                                     refund_times : doc.refund_times + 1,
                                     refund_done_times : doc.refund_done_times + 1,
                                     last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
-                                    $push : {refund_time : refund_time},
-                                    $push : {refund_id : result.refund_id},
-                                    $push : {out_refund_no : out_refund_no},
                                     refund_total_fee : total_fee,
-                                    refund_fee : refund_fee,
                                     msg : '退款处理成功',
+                                    refund_fee : {refund_fee},
                                     total_fee_left : doc.total_fee_left - refund_fee
                                 }
                                 //更新记录

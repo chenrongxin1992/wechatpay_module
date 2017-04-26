@@ -113,7 +113,9 @@ var WeChatPayOrder = new mongoose.Schema({
     out_refund_no : [{
         type : String
     }],//商户退款单
-    refund_fee : Number,//退款金额,
+    refund_fee : [{
+        type:Number
+    }],//退款金额,
     refund_total_fee : Number,//退款标价金额
     total_fee_left : Number//多次退款时剩余的金额
 
