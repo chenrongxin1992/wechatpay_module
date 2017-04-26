@@ -4,5 +4,6 @@ var mongoose = require('mongoose'),
 module.exports = function () {
     var db = mongoose.connect(config.mongodb);
     require('../entity/weChatPayOrder.server.entity');
+    require('../entity/weChatRefund.server.entity');
     return db;
 };

@@ -13,6 +13,7 @@ var https = require('https'),
     mongoose = require('mongoose'),
     config = require('../config/sysConfig'),
     weChatPay = mongoose.model(config.tables.weChatPayOrder),
+    weChatRefund = mongoose.model(config.tables.weChatRefund),
     exception = require('../module/exception'),
     businessConfig = require('../config/businessConfig'),
     getWxConfig = require('./index'),
@@ -205,7 +206,8 @@ exports.PlaceOrder = function (req, res, next) {
                             prepay_id: prepay_id,
                             code_url: code_url,
                             time_start : time_start,
-                            last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss')//最后更新时间
+                            last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),//最后更新时间
+                            total_fee_left : total_fee
                     });
                     pay.save(function (err,doc) {
                         if(err){
@@ -448,13 +450,13 @@ exports.refund = function(req,res){
         return res.json(exception.throwError(exception.code.error,'total_fee不能为空'))
     }
     
-    // var is_all = req.body.is_all ? 1 : 0 //默认全部退款(默认1)
+    //var is_all = req.body.is_all||1 //默认全部退款(默认1)
 
     var bid = req.body.bid,
         transaction_id = req.body.transaction_id,
         out_trade_no = req.body.out_trade_no,
-        refund_fee = parseInt(req.body.refund_fee),
-        total_fee = parseInt(req.body.total_fee),
+        refund_fee = req.body.refund_fee,
+        total_fee = req.body.total_fee,
         config = businessConfig[bid],
         refund_time = moment(Date.now()).format('YYYYMMDDHHmmss'),
         appid = config.appid,
@@ -463,18 +465,18 @@ exports.refund = function(req,res){
         nonce_str = weChatTools.randomStr(),
         out_refund_no = weChatTools.merchatPayOrderNo(trade_type)
 
-    if(refund_fee === total_fee){//全部退款
+    if(refund_fee == total_fee){//全部退款
         async.waterfall([
             function(cb){//订单不存在或者交易时间超过一年，直接返回
                 weChatPay.findOne({'$or' : [{'transaction_id':transaction_id},{'out_trade_no':out_trade_no}]},function(err,doc){
                     if(err){
                         console.log('-----  search err  -----')
                         console.error(err)
-                        cb(err)
+                        return cb(err)
                     }
                     if(!doc){
                         console.log('-----  doc is null  -----')
-                        cb('订单不存在')
+                        return cb('订单不存在')
                     }
                     var order_time_end_origin = moment(doc.time_end_origin,'YYYYMMDDHHmmss').format('X'),
                         now_time = moment().format('X')
@@ -483,11 +485,11 @@ exports.refund = function(req,res){
                     console.log(now_time)
                     if(now_time - order_time_end_origin > 31536000){
                         console.log('-----  交易时间超过1年  -----')
-                        cb('交易时间超过1年')
+                        return cb('交易时间超过1年')
                     }
                     if(total_fee != doc.total_fee){
-                        console.log('-----  交易total_fee金额有误  -----')
-                        cb('交易total_fee金额有误')
+                        console.log('-----  订单金额或退款金额不一致  -----')
+                        return cb('订单金额或退款金额不一致')
                     }
                     cb(null,doc)
                 })
@@ -621,7 +623,7 @@ exports.refund = function(req,res){
             return res.json({'result':'success'})
         })
     }
-    if(refund_fee < total_fee){//部分退款
+    if(total_fee != refund_fee){//部分退款
         async.waterfall([
             function(cb){//订单不存在或者交易时间超过一年，直接返回
                 weChatPay.findOne({'$or' : [{'transaction_id':transaction_id},{'out_trade_no':out_trade_no}]},function(err,doc){
@@ -641,26 +643,26 @@ exports.refund = function(req,res){
                     console.log(now_time)
                     if(now_time - order_time_end_origin > 31536000){
                         console.log('-----  交易时间超过1年  -----')
-                        cb('交易时间超过1年')
+                        return  cb('交易时间超过1年')
                     }
-                    if(total_fee != doc.total_fee){
-                        console.log('-----  交易total_fee金额有误  -----')
-                        return cb('交易total_fee金额有误')
-                    }
+                    // if(total_fee != doc.total_fee){
+                    //     console.log('-----  交易total_fee金额有误  -----')
+                    //     return cb('交易total_fee金额有误')
+                    // }
                     cb(null,doc)
                 })
             },
-            function(doc,cb){
-                if(refund_fee > doc.total_fee_left){
-                    console.log('-----  剩余金额不足以退款  -----')
-                    cb('剩余金额不足以退款')
-                }
-                if(doc.is_refund == 1 && doc.is_refund_done == 0){//(一笔退款失败后的重新提交, 需采用原来的退款单号.)
+            function(doc,cb){console.log('---------------  dd  -------------------')
+                // if(refund_fee > doc.total_fee_left){
+                //     console.log('-----  剩余金额不足以退款  -----')
+                //     cb('剩余金额不足以退款')
+                // }
+                /*if(doc.is_refund == 1 && doc.is_refund_done == 0){//(一笔退款失败后的重新提交, 需采用原来的退款单号.)
                     console.log('-----  该订单退款过，但未成功  -----')
                     console.log('new out_refund_no: ',out_refund_no)
                     out_refund_no = doc.out_refund_no
                     console.log('use old out_refund_no: ',out_refund_no)
-                }
+                }*/
 
                 console.log('-----  doc result  -----')
                 console.log(doc)
@@ -685,7 +687,7 @@ exports.refund = function(req,res){
                         {out_refund_no:out_refund_no},
                         {out_trade_no: out_trade_no},
                         {total_fee : total_fee},
-                        {refund_fee : total_fee},
+                        {refund_fee : refund_fee},
                         {op_user_id : mch_id}
                     ]
                 },
@@ -742,39 +744,33 @@ exports.refund = function(req,res){
                         }
                         if(result.result_code == 'SUCCESS'){
                             //退款成功
-                            var name = out_refund_no_ + doc.refund_times
+                            var name = 'out_refund_no_' + doc.refund_times
                             console.log('name: ',name)
-                            weChatPay.addStat(name,function(err){
-                                if(err){
-                                    console.log('-----  add stat err  -----')
-                                    console.error(err)
-                                    cb('add stat err')
-                                }
-                                console.log('-----  add stat success  -----')
+
+                            console.log('-----  add stat success  -----')
                                 var content = {
                                     is_refund : 1,
                                     is_refund_done : 1,
                                     refund_times : doc.refund_times + 1,
                                     refund_done_times : doc.refund_done_times + 1,
                                     last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
-                                    refund_time : refund_time,
-                                    refund_id : result.refund_id,
-                                    name : out_refund_no,
+                                    $push : {refund_time : refund_time},
+                                    $push : {refund_id : result.refund_id},
+                                    $push : {out_refund_no : out_refund_no},
                                     refund_total_fee : total_fee,
                                     refund_fee : refund_fee,
                                     msg : '退款处理成功',
-                                    total_fee_left : total_fee - refund_fee
+                                    total_fee_left : doc.total_fee_left - refund_fee
                                 }
                                 //更新记录
                                 weChatPay.UpdateById(doc._id,content,function(err){
                                     if(err){
                                         console.log('-----  update err  -----')
                                         console.error(err)
-                                        cb('update err')
+                                        return cb('update err')
                                     }
-                                    cb(null)
+                                    return cb(null)
                                 })
-                            })
                         }//success
                     })
                 })

@@ -98,15 +98,21 @@ var WeChatPayOrder = new mongoose.Schema({
     refund_done_times:{
         type:Number,
         default:0
-    },
+    },//退款成功次数
     is_refund : Number,  //是否退款单(0否1是)
     is_refund_done : {
         type:Number,
         default:null
     },//退款是否完成
-    refund_time : String,//退款完成时间(20170424101901)
-    refund_id : String ,//微信退款单
-    out_refund_no : String,//商户退款单
+    refund_time : [{
+        type : String
+    }],//退款完成时间(20170424101901)
+    refund_id : [{
+        type:String
+    }] ,//微信退款单
+    out_refund_no : [{
+        type : String
+    }],//商户退款单
     refund_fee : Number,//退款金额,
     refund_total_fee : Number,//退款标价金额
     total_fee_left : Number//多次退款时剩余的金额
