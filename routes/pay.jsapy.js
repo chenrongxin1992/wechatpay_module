@@ -418,7 +418,7 @@ exports.closeOrder = function(req,res){
                             res.json({'err':err})
                         }
                         console.log('----- closeOrder done  ----')
-                        res.json({'result':'success'})
+                        res.json(exception.success('success')})
                     })
                 }
             })
