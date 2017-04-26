@@ -34,17 +34,11 @@
                 paySign: '<%= wxchoosepay.paySign %>',
                 success: function (res) {
                     var result = JSON.stringify(res)
-                    alert(result)
-                    console.log('----- 支付成功回调  -----');
-                    console.log(result)
-                    if(res.errMsg == "chooseWXPay:ok"){
+                    if(result.errMsg == "chooseWXPay:ok"){
                         alert('支付成功！');
-                    }else if(res.errMsg == "chooseWXPay:cancel"){
+                    }else if(result.errMsg == "chooseWXPay:cancel"){
                         alert('取消支付！');
                     }
-                },
-                cancel: function(res){
-
                 }
             })
         } 
