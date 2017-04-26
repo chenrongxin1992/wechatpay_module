@@ -648,9 +648,9 @@ exports.refund = function(req,res){
             if(err){
                 console.log('-----  async err  -----')
                 console.error(err)
-                return res.json({'err':err})
+                return res.json(exception.throwError(exception.code.error, err.message))
             }
-            return res.json({'result':'success'})
+            return res.json(exception.success('success'))
         })
     }
     if(total_fee != refund_fee){//部分退款
@@ -834,9 +834,9 @@ exports.refund = function(req,res){
             if(err){
                 console.log('-----  async err  -----')
                 console.error(err)
-                return res.json({'errMsg':err})
+                return res.json(exception.throwError(exception.code.error, err.message))
             }
-            return res.json({'result':'success'})
+            return res.json(exception.success('success'))
         })
     }
     if(refund_fee > total_fee){
