@@ -449,8 +449,6 @@ exports.refund = function(req,res){
     if(!req.body.total_fee){
         return res.json(exception.throwError(exception.code.error,'total_fee不能为空'))
     }
-    
-    //var is_all = req.body.is_all||1 //默认全部退款(默认1)
 
     var bid = req.body.bid,
         transaction_id = req.body.transaction_id,
@@ -488,19 +486,19 @@ exports.refund = function(req,res){
                         return cb('交易时间超过1年')
                     }
                     if(total_fee != doc.total_fee){
-                        console.log('-----  订单金额或退款金额不一致  -----')
-                        return cb('订单金额或退款金额不一致')
+                        console.log('-----  订单金额和退款金额不一致  -----')
+                        return cb('订单金额和退款金额不一致')
                     }
                     cb(null,doc)
                 })
             },
             function(doc,cb){
-                if(doc.is_refund == 1 && doc.is_refund_done ==0){//(一笔退款失败后的重新提交, 需采用原来的退款单号.)
+                /*if(doc.is_refund == 1 && doc.is_refund_done ==0){//(一笔退款失败后的重新提交, 需采用原来的退款单号.)
                     console.log('-----  该订单退款过，但未成功  -----')
                     console.log('new out_refund_no: ',out_refund_no)
                     out_refund_no = doc.out_refund_no
                     console.log('use old out_refund_no: ',out_refund_no)
-                }
+                }*/
                 console.log('-----  doc result  -----')
                 console.log(doc)
                 var sign_data = {
@@ -560,15 +558,15 @@ exports.refund = function(req,res){
                             console.log('-----  申请成功，但是退款不成功  -----')
                             var content = {
                                 is_refund : 1,//0标识申请过退款
-                                is_refund_done : 0,//0标识退款失败
+                                //is_refund_done : 0,//0标识退款失败
                                 refund_times : doc.refund_times + 1,
                                 last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
-                                refund_time : refund_time,
-                                out_refund_no : out_refund_no,
+                                //refund_time : refund_time,
+                                //out_refund_no : out_refund_no,
                                 refund_total_fee : total_fee,
-                                refund_fee : refund_fee,
+                                //refund_fee : refund_fee,
                                 msg : result.err_code_des,
-                                total_fee_left : total_fee
+                                //total_fee_left : total_fee
                             }
                             weChatPay.UpdateById(doc._id,content,function(err){
                                 if(err){
@@ -576,22 +574,36 @@ exports.refund = function(req,res){
                                     console.error(err)
                                     cb('update err')
                                 }
-                                 return res.json(exception.throwError(result.err_code,result.err_code_des))
+                                weChatPay.update({_id:doc._id},{"$push":
+                                        {
+                                            is_refund_done : 0,//0标识退款失败
+                                            refund_time : refund_time, 
+                                            //refund_id : result.refund_id,
+                                            out_refund_no : out_refund_no,
+                                            refund_fee : refund_fee,
+                                        }},function(err){
+                                            if(err){
+                                                console.log('----- update array err -----')
+                                                console.error(err)
+                                            }
+                                     return res.json(exception.throwError(result.err_code,result.err_code_des))
+                                })
+                                 //return res.json(exception.throwError(result.err_code,result.err_code_des))
                             })
                         }
                         if(result.result_code == 'SUCCESS'){
                             //退款成功
                             var content = {
                                 is_refund : 1,
-                                is_refund_done : 1,
+                                //is_refund_done : 1,
                                 refund_times : doc.refund_times + 1,//退款次数
                                 refund_done_times : doc.refund_done_times +1,//退款成功次数
                                 last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
-                                refund_time : refund_time,
-                                refund_id : result.refund_id,
-                                out_refund_no : out_refund_no,
+                                //refund_time : refund_time,
+                                //refund_id : result.refund_id,
+                                //out_refund_no : out_refund_no,
                                 refund_total_fee : total_fee,
-                                refund_fee : refund_fee,
+                                //refund_fee : refund_fee,
                                 msg : '退款处理成功',
                                 total_fee_left : 0
                             }
@@ -602,7 +614,21 @@ exports.refund = function(req,res){
                                     console.error(err)
                                     cb('update err')
                                 }
-                                cb(null)
+                                weChatPay.update({_id:doc._id},{"$push":
+                                        {
+                                            is_refund_done : 1,//0标识退款失败
+                                            refund_time : refund_time, 
+                                            refund_id : result.refund_id,
+                                            out_refund_no : out_refund_no,
+                                            refund_fee : refund_fee,
+                                        }},function(err){
+                                            if(err){
+                                                console.log('----- update array err -----')
+                                                console.error(err)
+                                            }
+                                     //return res.json(exception.throwError(result.err_code,result.err_code_des))
+                                    return cb(null)
+                                })
                             })
                         }//success
                     })
@@ -644,6 +670,11 @@ exports.refund = function(req,res){
                     if(now_time - order_time_end_origin > 31536000){
                         console.log('-----  交易时间超过1年  -----')
                         return  cb('交易时间超过1年')
+                    }
+                    //剩余金额不足退款，返回
+                    if(doc.total_fee_left < refund_fee){
+                        console.log('-----  剩余金额不足退款  -----')
+                        return res.json(exception.throwError(exception.code.error,'剩余金额不足退款'))
                     }
                     // if(total_fee != doc.total_fee){
                     //     console.log('-----  交易total_fee金额有误  -----')
@@ -720,17 +751,14 @@ exports.refund = function(req,res){
                         if(result.return_code == 'FAIL')
                             return res.json(exception.throwError(exception.code.error, result.return_msg))
                         if(result.result_code == 'FAIL'){
-                            //申请成功，但是退款不成功
+                            //申请成功，但是退款不成功,业务失败
+                            //return res.json(exception.throwError(result.err_code,result.err_code_des))
                             console.log('-----  申请成功，但是退款不成功  -----')
                             var content = {
-                                is_refund : 1,//0标识申请过退款
-                                is_refund_done : 0,//0标识退款失败
+                                is_refund : 1,//0标识申请过退款 
                                 refund_times : doc.refund_times + 1,
                                 last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
-                                refund_time : refund_time,
-                                out_refund_no : out_refund_no,
-                                refund_total_fee : total_fee,
-                                refund_fee : refund_fee,
+                                refund_total_fee : total_fee,                               
                                 msg : result.err_code_des
                             }
                             weChatPay.UpdateById(doc._id,content,function(err){
@@ -739,24 +767,31 @@ exports.refund = function(req,res){
                                     console.error(err)
                                     cb('update err')
                                 }
-                                 return res.json(exception.throwError(result.err_code,result.err_code_des))
+                                weChatPay.update({_id:doc._id},{"$push":
+                                        {
+                                            is_refund_done : 0,//0标识退款失败
+                                            refund_time : refund_time, 
+                                            refund_id : result.refund_id,
+                                            out_refund_no : out_refund_no,
+                                            refund_fee : refund_fee,
+                                        }},function(err){
+                                            if(err){
+                                                console.log('----- update array err -----')
+                                                console.error(err)
+                                            }
+                                     return res.json(exception.throwError(result.err_code,result.err_code_des))
+                                })  
                             })
                         }
                         if(result.result_code == 'SUCCESS'){
                             //退款成功
-                            var name = 'out_refund_no_' + doc.refund_times
-                            console.log('name: ',name)
-
-                            console.log('-----  add stat success  -----')
                                 var content = {
                                     is_refund : 1,
-                                    is_refund_done : 1,
                                     refund_times : doc.refund_times + 1,
                                     refund_done_times : doc.refund_done_times + 1,
                                     last_modify_time : moment(Date.now()).format('YYYYMMDDHHmmss'),
                                     refund_total_fee : total_fee,
                                     msg : '退款处理成功',
-                                    refund_fee : {refund_fee},
                                     total_fee_left : doc.total_fee_left - refund_fee
                                 }
                                 //更新记录
@@ -766,7 +801,20 @@ exports.refund = function(req,res){
                                         console.error(err)
                                         return cb('update err')
                                     }
-                                    return cb(null)
+                                    weChatPay.update({_id:doc._id},{"$push":
+                                        {
+                                            is_refund_done : 1,
+                                            refund_time : refund_time, 
+                                            refund_id : result.refund_id,
+                                            out_refund_no : out_refund_no,
+                                            refund_fee : refund_fee,
+                                        }},function(err){
+                                            if(err){
+                                                console.log('----- update array err -----')
+                                                console.error(err)
+                                            }
+                                             return cb(null)
+                                    })
                                 })
                         }//success
                     })

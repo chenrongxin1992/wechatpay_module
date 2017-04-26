@@ -100,10 +100,10 @@ var WeChatPayOrder = new mongoose.Schema({
         default:0
     },//退款成功次数
     is_refund : Number,  //是否退款单(0否1是)
-    is_refund_done : {
+    is_refund_done : [{
         type:Number,
         default:null
-    },//退款是否完成
+    }],//退款是否完成
     refund_time : [{
         type : String
     }],//退款完成时间(20170424101901)
