@@ -49,7 +49,7 @@ exports.PlaceOrder = function (req, res, next) {
                 }
                 console.log('----------  one  ------------')
                 console.log(getWxConfig_res)
-                cb(null,getWxConfig_res)
+               return cb(null,getWxConfig_res)
             })       
         },
         function(arg,cb){
@@ -230,7 +230,7 @@ exports.PlaceOrder = function (req, res, next) {
                         signType : signType,
                         paySign : paySign
                     }
-                    cb(null,arg,data)
+                    return cb(null,arg,data)
                     //res.json(data)
                    /* res.locals.data = {
                         appId : config.appid,
@@ -489,7 +489,7 @@ exports.refund = function(req,res){
                         console.log('-----  订单金额和退款金额不一致  -----')
                         return cb('订单金额和退款金额不一致')
                     }
-                    cb(null,doc)
+                    return cb(null,doc)
                 })
             },
             function(doc,cb){
@@ -572,7 +572,7 @@ exports.refund = function(req,res){
                                 if(err){
                                     console.log('-----  update err  -----')
                                     console.error(err)
-                                    cb('update err')
+                                    return cb('update err')
                                 }
                                 weChatPay.update({_id:doc._id},{"$push":
                                         {
@@ -612,7 +612,7 @@ exports.refund = function(req,res){
                                 if(err){
                                     console.log('-----  update err  -----')
                                     console.error(err)
-                                    cb('update err')
+                                    return cb('update err')
                                 }
                                 weChatPay.update({_id:doc._id},{"$push":
                                         {
@@ -656,11 +656,11 @@ exports.refund = function(req,res){
                     if(err){
                         console.log('-----  search err  -----')
                         console.error(err)
-                        cb(err)
+                        return cb(err)
                     }
                     if(!doc){
                         console.log('-----  doc is null  -----')
-                        cb('订单不存在')
+                        return cb('订单不存在')
                     }
                     var order_time_end_origin = moment(doc.time_end_origin,'YYYYMMDDHHmmss').format('X'),
                         now_time = moment().format('X')
@@ -680,7 +680,7 @@ exports.refund = function(req,res){
                     //     console.log('-----  交易total_fee金额有误  -----')
                     //     return cb('交易total_fee金额有误')
                     // }
-                    cb(null,doc)
+                    return cb(null,doc)
                 })
             },
             function(doc,cb){console.log('---------------  dd  -------------------')
@@ -765,7 +765,7 @@ exports.refund = function(req,res){
                                 if(err){
                                     console.log('-----  update err  -----')
                                     console.error(err)
-                                    cb('update err')
+                                    return cb('update err')
                                 }
                                 weChatPay.update({_id:doc._id},{"$push":
                                         {
