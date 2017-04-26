@@ -482,12 +482,16 @@ exports.refund = function(req,res){
                     console.log(order_time_end_origin)
                     console.log(now_time)
                     if(now_time - order_time_end_origin > 31536000){
-                        console.log('-----  交易时间超过1年  -----')
-                        return cb('交易时间超过1年')
+                        console.log('-----  订单交易时间超过1年  -----')
+                        return res.json(exception.throwError(exception.code.error, '订单交易时间超过1年'))
                     }
                     if(total_fee != doc.total_fee){
                         console.log('-----  订单金额和退款金额不一致  -----')
-                        return cb('订单金额和退款金额不一致')
+                        return res.json(exception.throwError(exception.code.error, '订单金额和退款金额不一致'))
+                    }
+                    if(doc.total_fee_left == 0){
+                        console.log('-----  该订单已全额退款  -----')
+                        return res.json(exception.throwError(exception.code.error, '该订单已全部退款'))
                     }
                     return cb(null,doc)
                 })
@@ -507,7 +511,7 @@ exports.refund = function(req,res){
                     op_user_id : mch_id,
                     nonce_str : nonce_str,
                     out_refund_no : out_refund_no,//唯一退款单号
-                    out_trade_no : out_trade_no,
+                    out_trade_no : doc.out_trade_no,
                     refund_fee : refund_fee,
                     total_fee : total_fee
                 },
@@ -519,7 +523,7 @@ exports.refund = function(req,res){
                         {nonce_str: nonce_str},
                         {sign: sign},
                         {out_refund_no:out_refund_no},
-                        {out_trade_no: out_trade_no},
+                        {out_trade_no: doc.out_trade_no},
                         {total_fee : total_fee},
                         {refund_fee : total_fee},
                         {op_user_id : mch_id}
@@ -660,7 +664,7 @@ exports.refund = function(req,res){
                     }
                     if(!doc){
                         console.log('-----  doc is null  -----')
-                        return cb('订单不存在')
+                        return res.json(exception.throwError(exception.code.error,'订单不存在'))
                     }
                     var order_time_end_origin = moment(doc.time_end_origin,'YYYYMMDDHHmmss').format('X'),
                         now_time = moment().format('X')
@@ -668,8 +672,8 @@ exports.refund = function(req,res){
                     console.log(order_time_end_origin)
                     console.log(now_time)
                     if(now_time - order_time_end_origin > 31536000){
-                        console.log('-----  交易时间超过1年  -----')
-                        return  cb('交易时间超过1年')
+                        console.log('-----  订单交易时间超过1年  -----')
+                        return  res.json(exception.throwError(exception.code.error,'订单交易时间超过1年'))
                     }
                     //剩余金额不足退款，返回
                     if(doc.total_fee_left < refund_fee){
@@ -683,7 +687,7 @@ exports.refund = function(req,res){
                     return cb(null,doc)
                 })
             },
-            function(doc,cb){console.log('---------------  dd  -------------------')
+            function(doc,cb){
                 // if(refund_fee > doc.total_fee_left){
                 //     console.log('-----  剩余金额不足以退款  -----')
                 //     cb('剩余金额不足以退款')
@@ -704,7 +708,7 @@ exports.refund = function(req,res){
                     op_user_id : mch_id,
                     nonce_str : nonce_str,
                     out_refund_no : out_refund_no,//唯一退款单号
-                    out_trade_no : out_trade_no,
+                    out_trade_no : doc.out_trade_no,
                     refund_fee : refund_fee,
                     total_fee : total_fee
                 },
@@ -716,7 +720,7 @@ exports.refund = function(req,res){
                         {nonce_str: nonce_str},
                         {sign: sign},
                         {out_refund_no:out_refund_no},
-                        {out_trade_no: out_trade_no},
+                        {out_trade_no: doc.out_trade_no},
                         {total_fee : total_fee},
                         {refund_fee : refund_fee},
                         {op_user_id : mch_id}
@@ -765,7 +769,7 @@ exports.refund = function(req,res){
                                 if(err){
                                     console.log('-----  update err  -----')
                                     console.error(err)
-                                    return cb('update err')
+                                    return res.json(exception.throwError(exception.code.error, 'update err'))
                                 }
                                 weChatPay.update({_id:doc._id},{"$push":
                                         {
@@ -799,7 +803,7 @@ exports.refund = function(req,res){
                                     if(err){
                                         console.log('-----  update err  -----')
                                         console.error(err)
-                                        return cb('update err')
+                                        return res.json(exception.throwError(exception.code.error, 'update err'))
                                     }
                                     weChatPay.update({_id:doc._id},{"$push":
                                         {
@@ -813,7 +817,7 @@ exports.refund = function(req,res){
                                                 console.log('----- update array err -----')
                                                 console.error(err)
                                             }
-                                             return cb(null)
+                                            return cb(null)
                                     })
                                 })
                         }//success
@@ -830,7 +834,7 @@ exports.refund = function(req,res){
             if(err){
                 console.log('-----  async err  -----')
                 console.error(err)
-                return res.json({'err':err})
+                return res.json({'errMsg':err})
             }
             return res.json({'result':'success'})
         })
