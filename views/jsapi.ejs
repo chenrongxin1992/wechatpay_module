@@ -5,15 +5,11 @@
 </head>
 <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
 <body>
-      appId: '<%= wxconfig.appid %>',
-            timestamp: '<%= wxconfig.timestamp %>',
-            nonceStr: '<%= wxconfig.noncestr %>',
-            signature: '<%= wxconfig.signature %>',
 
    <p style="font-size: 100px" onclick="testpay()">点击支付</p>
    <script type="text/javascript">
         wx.config({
-            debug: true,
+            debug: false,
             appId: '<%= wxconfig.appid %>',
             timestamp: '<%= wxconfig.timestamp %>',
             nonceStr: '<%= wxconfig.noncestr %>',
@@ -36,7 +32,7 @@
                 package: '<%= wxchoosepay.package %>',
                 signType: 'MD5',
                 paySign: '<%= wxchoosepay.paySign %>',
-                success: function (res) {
+                success: function (res) {alert(res)
                     console.log('----- 支付成功回调  -----');
                     console.log(res)
                     if(res.errMsg == "chooseWXPay:ok"){

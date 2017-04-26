@@ -347,7 +347,7 @@ exports.closeOrder = function(req,res){
         }
 
         if(doc.is_done === 1){
-            return res.json(exception.throwError(exception.code.error, '该订单已关闭'))
+            return res.json(exception.throwError(exception.code.error, '该订单已交易完成'))
         }
         var time_start = moment(doc.time_start,'YYYYMMDDHHmmss').format('X')
             now_time = moment(Date.now()).format('X')
