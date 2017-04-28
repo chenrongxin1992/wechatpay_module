@@ -60,7 +60,7 @@ exports.PlaceOrder = function (req, res, next) {
                 total_fee = req.body.fee,  //总金额
                 spbill_create_ip = req.body.ip, //用户客户端IP
                 openid = req.body.openid; //用户标识
-                
+
             //测试数据
             /*var bid = '0',  //商圈编号
                 title = 'ceshi',  //商品描述
@@ -98,10 +98,10 @@ exports.PlaceOrder = function (req, res, next) {
                 return res.json(exception.throwError(exception.code.sysError.DateFormatError, '支付金额fee格式错误'));
             }
             if (!spbill_create_ip) {
-                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '客户端IP不能为空'));
+                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '客户端ip不能为空'));
             }
             if (!openid) {
-                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '用户openId不能为空'));
+                return res.json(exception.throwError(exception.code.sysError.InfoIncomplete, '用户openid不能为空'));
             }
 
             //当传入订单号为空时，默认为商户订单号
@@ -267,8 +267,9 @@ exports.PlaceOrder = function (req, res, next) {
             paySign : arg2.paySign,
             signType : arg2.signType
         }
+        console.log('----- result -----')
         console.log(result)
-        return res.json(result)
+        return res.json(exception.success(result))
         // res.locals.wxconfig = arg1
         // res.locals.wxchoosepay = arg2
         //res.render('jsapi')
