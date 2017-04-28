@@ -53,20 +53,21 @@ exports.PlaceOrder = function (req, res, next) {
             })       
         },
         function(arg,cb){
-            /*var bid = req.body.bid,  //商圈编号
+            //ip:183.39.153.227
+            var bid = req.body.bid,  //商圈编号
                 title = req.body.title,  //商品描述
                 wx_order_no = req.body.orderNo, //订单号  非必传，
                 total_fee = req.body.fee,  //总金额
                 spbill_create_ip = req.body.ip, //用户客户端IP
-                openid = req.body.openid; //用户标识*/
-
+                openid = req.body.openid; //用户标识
+                
             //测试数据
-            var bid = '0',  //商圈编号
+            /*var bid = '0',  //商圈编号
                 title = 'ceshi',  //商品描述
                 wx_order_no = '', //订单号  非必传，
                 total_fee = 5,  //总金额
                 spbill_create_ip = req.headers['x-forwarded-for'], //用户客户端IP
-                openid = 'or0Yltxu45dWsOsJVp9VchNKsUrA'; //用户标识
+                openid = 'or0Yltxu45dWsOsJVp9VchNKsUrA'; //用户标识*/
             console.log('客户端ip:',spbill_create_ip)
             var time_start = moment().format('YYYYMMDDHHmmss')  //下单时间
             console.log('---------  下单时间  ---------')
